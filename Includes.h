@@ -5,6 +5,8 @@
 #include "Param.h"
 
 #include "Point.h"
-#include "Cell_Matrix.h"
-
+#include "Cell.h"
+#include "Matrix.h"
+#include "Dinmat.h"
+#include "Elipsoid.h"
 #endif

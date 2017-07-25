@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include "Error.h"
 class Param
 {
 protected:
@@ -16,12 +17,10 @@ protected:
 	std::vector<int> minargs;
 	std::vector<int> maxargs;
 	std::vector<std::string> nonamestr;
-	bool noname;
+	bool noname = false;
 	std::string nonamePar;
 public:
-	Param() {
-		noname = false;
-	}
+	Param() {}
 	void AddNoname(std::string params)
 	{
 		nonamePar = params;
@@ -37,7 +36,6 @@ public:
 	}
 	void TakeAgrs(int argn, char * argv[])
 	{
-
 		found.resize(id.size(), false);
 		strout.resize(id.size());
 		int k = -1, l = -1;
@@ -49,10 +47,11 @@ public:
 					nonamestr.push_back(argv[i]);
 				}
 				else {
-					std::cout << "Not found '-' before parameter" << std::endl;
-					std::cout << "Program terminated!" << std::endl;
-					system("pause");
-					exit(-1);
+//					std::cout << "Not found '-' before parameter" << std::endl;
+//					std::cout << "Program terminated!" << std::endl;
+//					system("pause");
+//					exit(-1);
+					Error::StopFatalError("Didn't find \"-\" before parameter");
 
 				}
 			}
@@ -60,7 +59,7 @@ public:
 				break;
 			i++;
 		} while (i<argn);
-			
+
 		for (; i < argn; i++) {
 			if (argv[i][0] == '-') {
 				//search for parameter
@@ -73,11 +72,11 @@ public:
 					}
 				}
 				//not found in list
-				std::cout << "Unknown parameter: " << argv[i] << std::endl;
-				std::cout << "Program terminated!" << std::endl;
-				system("pause");
-				exit(-1);
-
+//				std::cout << "Unknown parameter: " << argv[i] << std::endl;
+//				std::cout << "Program terminated!" << std::endl;
+//				system("pause");
+//				exit(-1);
+				Error::StopFatalError("Unknown parameter: " + std::string(argv[i]));
 			}
 			else {
 				//add new strout
@@ -91,7 +90,7 @@ public:
 			if (found[i] == false)
 				continue;
 			if (minargs[i] >(int)strout[i].size() || maxargs[i] < (int)strout[i].size()) {
-				std::cout << "Parameter !";
+				std::cout << "Parameter ";
 				for (int j = 0; j < (int)names[i].size(); j++) {
 					std::cout << names[i][j];
 					if (j != names[i].size() - 1)
