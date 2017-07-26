@@ -28,8 +28,11 @@ private:
     const flo RadtoGrad = static_cast<flo> (90/1.57079632679489661923);
 	const flo GradtoRad = static_cast<flo> (1.57079632679489661923/90);
 
-    Point center = Point(0,0,0);
-	bool useCenter = false;
+    Point cartCenter = Point(0,0,0);
+	bool useCartCenter = false;
+
+	Point fracCenter = Point(0, 0, 0);
+	bool useFracCenter = false;
 
 	int number = 0;
 	int type = 1;
@@ -75,33 +78,43 @@ public:
         for(int i = 0; i < size; i++)
             cent += vecPoints[i];
         cent = cent * static_cast<flo> (1.0 / size);
-        center = cent;
-		useCenter = true;
+		if (is_fractal) {
+			fracCenter = cent;
+			useFracCenter = true;
+		}
+		else {
+			cartCenter = cent;
+			useCartCenter = true;
+		}
         return ELIPSOID_RESULT::OK;
     }
     ELIPSOID_RESULT CalculateDinmat() {
 		if(is_fractal == true) {
 			if(useCell == false)
 				return ELIPSOID_RESULT::UndefenedCell;
-			useCenter = false;
+			useCartCenter = false;
 			int size = vecPoints.size();
 			Matrix FTC = pCell->FracToCart();
 			for(int i = 0; i < size; i++) {
 				vecPoints[i] = FTC*vecPoints[i];
 			}
 		}
-		if(useCenter == false) {
+		if(useCartCenter == false) {
         	ELIPSOID_RESULT calcres = CalculateCenter();
         	if(calcres != ELIPSOID_RESULT::OK) return calcres;
 		}
+
+		fracCenter = pCell->CartToFrac()*cartCenter;
+		useFracCenter = true;
+
         int size = static_cast<int>(vecPoints.size());
         if(useDinmat == true) {
             dinmat = Dinmat();
         }
         for(int i = 0; i < size; i++) {
-            flo dx = vecPoints[i].a[0]-center.a[0];
-            flo dy = vecPoints[i].a[1] -center.a[1];
-            flo dz = vecPoints[i].a[2] -center.a[2];
+            flo dx = vecPoints[i].a[0]-cartCenter.a[0];
+            flo dy = vecPoints[i].a[1] -cartCenter.a[1];
+            flo dz = vecPoints[i].a[2] -cartCenter.a[2];
             dinmat.U[0] += dx*dx;
 			dinmat.U[1] += dy*dy;
 			dinmat.U[2] += dz*dz;
@@ -120,7 +133,7 @@ public:
 		if (!(useLabel && useDinmat))
 			throw "Elipsoid Output Error!";
 		ss.precision(6);
-		ss << label << number << ' ' << type << ' ' << center.a[0] << ' ' << center.a[1] << ' ' << center.a[2] << ' '
+		ss << label << number << ' ' << type << ' ' << fracCenter.a[0] << ' ' << fracCenter.a[1] << ' ' << fracCenter.a[2] << ' '
 			<< dinmat.U[0] << ' ' << dinmat.U[1] << ' ' << dinmat.U[2] << " =\n " 
 			<< dinmat.U[5] << ' ' << dinmat.U[4] << ' ' << dinmat.U[3];
 		return std::string(ss.str());
