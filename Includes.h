@@ -3,7 +3,7 @@
 #define INCLUDES_H
 
 #include "Param.h"
-
+#include "Error.h"
 #include "Point.h"
 #include "Cell.h"
 #include "Matrix.h"

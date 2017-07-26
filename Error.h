@@ -12,8 +12,8 @@ namespace nsError {
 	const int ERROR = 2;
 	const int ENTER = 4;
 	const int EXIT = 8;
-}
-class Error {
+};
+class MyError {
 private:
     static void Enter() {
         std::cerr << "Press \'Enter\' to continue." << std::endl;
@@ -32,7 +32,7 @@ public:
     bool w,e,en,ex;
     std::string mes;
     int flags;
-    Error(const std::string & mess, int in_flags) {
+    MyError(const std::string & mess, int in_flags) {
 		using namespace nsError;
         mes = mess;
         flags = in_flags;

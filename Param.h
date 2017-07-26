@@ -51,7 +51,7 @@ public:
 //					std::cout << "Program terminated!" << std::endl;
 //					system("pause");
 //					exit(-1);
-					Error::StopFatalError("Didn't find \"-\" before parameter");
+					MyError::StopFatalError("Didn't find \"-\" before parameter");
 
 				}
 			}
@@ -76,7 +76,7 @@ public:
 //				std::cout << "Program terminated!" << std::endl;
 //				system("pause");
 //				exit(-1);
-				Error::StopFatalError("Unknown parameter: " + std::string(argv[i]));
+				MyError::StopFatalError("Unknown parameter: " + std::string(argv[i]));
 			}
 			else {
 				//add new strout

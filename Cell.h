@@ -37,7 +37,7 @@ private:
 		angle_rad[1] = acos(fracToCart.El(0,2) / lat_dir[2]);
 		angle_rad[0] = acos(temp/lat_dir[2]);
 		for(int i = 0; i < 3; i++)
-			angle_grad[i] = angle_rad*RadtoGrad;
+			angle_grad[i] = angle_rad[i] * RadtoGrad;
 	}
 	void CreateFromCartToFrac(const tMatrix<_T> & Mat) {
 		cartToFrac = Mat;
@@ -47,11 +47,11 @@ private:
 public:
 	//tCell() {}
 	explicit tCell(const tMatrix<_T> & Mat, const bool is_FracToCart = true) {
-		if(is_FractToCart) CreateFromFracToCart(Mat);
+		if(is_FracToCart) CreateFromFracToCart(Mat);
 		else CreateFromCartToFrac(Mat);
 	}
 	_T Lat_dir(const int i) const{
-		return lat_dit[i];
+		return lat_dir[i];
 	}
 	_T Angle_rad(const int i) const{
 		return angle_rad[i];

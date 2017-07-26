@@ -7,10 +7,10 @@
 #include "Point.h" // class Point
 #include "Cell.h" // class Cell
 #include "Dinmat.h" // class Dinmat
-#include "Matrix.h"
-//#include "Cell_Matrix.h" // class Cell and Dinmat
+#include "Matrix.h" // class Matrix
 #include <vector>
 #include <string>
+#include <sstream>
 __if_not_exists (flo) {
 	typedef float flo;
 }
@@ -19,7 +19,8 @@ enum ELIPSOID_RESULT {
 	OK = 0,
 	WrongParameters,
 	ZeroVecPoints,
-	UndefenedCell
+	UndefenedCell,
+	Uncalculated
 };
 
 class Elipsoid {
@@ -30,7 +31,9 @@ private:
     Point center = Point(0,0,0);
 	bool useCenter = false;
 
-	std::string label = "";
+	int number = 0;
+	int type = 1;
+	std::string label = "Q";
 	bool useLabel = false;
 
     bool is_fractal = true;
@@ -46,8 +49,10 @@ private:
 public:
     Elipsoid() {};
     ~Elipsoid() {};
-	void DefineLabel(std::string & s)  {
+	void DefineLabel(std::string & s, const int num, const int typ)  {
 		label = s;
+		type = typ;
+		number = num;
 		useLabel = true;
 	}
 	void DefineCell(Cell & s) {
@@ -104,10 +109,22 @@ public:
 			dinmat.U[4] += dx*dz;
 			dinmat.U[5] += dy*dz;
         }
-		for(int i = 0; i < size; i++) {
+		for(int i = 0; i < 6; i++) {
 			dinmat.U[i] /= size;
 		}
+		useDinmat = true;
+		return ELIPSOID_RESULT::OK;
     }
+	std::string OutShelxString() const {
+		std::stringstream ss;
+		if (!(useLabel && useDinmat))
+			throw "Elipsoid Output Error!";
+		ss.precision(6);
+		ss << label << number << ' ' << type << ' ' << center.a[0] << ' ' << center.a[1] << ' ' << center.a[2] << ' '
+			<< dinmat.U[0] << ' ' << dinmat.U[1] << ' ' << dinmat.U[2] << " =\n " 
+			<< dinmat.U[5] << ' ' << dinmat.U[4] << ' ' << dinmat.U[3];
+		return std::string(ss.str());
+	}
 };
 
 #endif
