@@ -139,7 +139,7 @@ tPoint<_T> operator/(const _T b, const tPoint<_T> & right)
 template<class _T = flo>
 tPoint<_T> operator*(const tMatrix<_T> & left, const tPoint<_T> & right) {
 	if (left.sizeA() != 3 || left.sizeB() != 3)
-		throw MyError("tPoint<_T>::operator*(tMatrix<_T>,tPoint<_T>) : Matrix must have size 3x3.", nsError::EXIT | nsError::ERROR);
+		throw MyError("tPoint<_T>::operator*(tMatrix<_T>,tPoint<_T>) : Matrix must have size 3x3.", nsError::Exit | nsError::Error);
 	tPoint<_T> res;
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {

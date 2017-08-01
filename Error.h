@@ -6,20 +6,27 @@
 #ifdef _CONSOLE
 #include <iostream>
 #include <string>
-
 namespace nsError {
-	const int WARN = 1;
-	const int ERROR = 2;
-	const int ENTER = 4;
-	const int EXIT = 8;
+	const int Warn = 1;
+	const int Error = 2;
+	const int Enter = 4;
+	const int Exit = 8;
 };
 class MyError {
 private:
     static void Enter() {
         std::cerr << "Press \'Enter\' to continue." << std::endl;
 		std::cin.clear();
+#ifdef max
+#undef max
+#define _undefedMax
+#endif
 		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        //std::cin.get();
+
+#ifdef _undefedMax
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#undef _undefedMax
+#endif
     }
     static void General(bool warn, bool err) {
         if(warn && err) Hard("Using BOTH flags of Error and Warning.",false,true,false);
@@ -33,13 +40,12 @@ public:
     std::string mes;
     int flags;
     MyError(const std::string & mess, int in_flags) {
-		using namespace nsError;
         mes = mess;
         flags = in_flags;
-        w = (flags & WARN)!=0;
-        e = (flags & ERROR)!=0;
-        en = (flags & ENTER)!=0;
-        ex = (flags & EXIT)!=0;
+        w = (flags & nsError::Warn)!=0;
+        e = (flags & nsError::Error)!=0;
+        en = (flags & nsError::Enter)!=0;
+        ex = (flags & nsError::Exit)!=0;
     }
     void Execute () {
         if(ex) Hard(mes,w,e,en);
@@ -47,8 +53,8 @@ public:
     }
     static void BaseError(const std::string & mess, int flags) {
 		using namespace nsError;
-        if((flags & EXIT) == 0) Lite(mess, ((flags & WARN)!=0), ((flags & ERROR)!=0), ((flags & ENTER)!=0));
-        else Hard(mess, ((flags & WARN)!=0), ((flags & ERROR)!=0), ((flags & ENTER)!=0));
+        if((flags & Exit) == 0) Lite(mess, ((flags & nsError::Warn)!=0), ((flags & nsError::Error)!=0), ((flags & nsError::Enter)!=0));
+        else Hard(mess, ((flags & Warn)!=0), ((flags & nsError::Error)!=0), ((flags & nsError::Enter)!=0));
     }
     static void Lite(const std::string & mess, bool warn, bool err, bool enter) {
         General(warn, err);

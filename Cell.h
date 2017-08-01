@@ -45,24 +45,44 @@ private:
 		TakeCellFromFracToCart();
 	}
 public:
-	//tCell() {}
 	explicit tCell(const tMatrix<_T> & Mat, const bool is_FracToCart = true) {
 		if(is_FracToCart) CreateFromFracToCart(Mat);
 		else CreateFromCartToFrac(Mat);
 	}
-	_T Lat_dir(const int i) const{
+	explicit tCell(const _T a = 10, const _T b = 10, const _T c = 10, const _T alpha = 90, const _T beta = 90, const _T gamma = 90, const bool is_grad = true) {
+		lat_dir[0](a);
+		lat_dir[1](b);
+		lat_dir[2](c);
+		if (is_grad) {
+			angle_grad[0] = alpha;
+			angle_grad[1] = beta;
+			angle_grad[2] = gamma;
+			for (int i = 0; i < 3; i++) {
+				angle_rad[i] = angle_grad[i] * GradtoRad;
+			}
+		}
+		else {
+			angle_rad[0] = alpha;
+			angle_rad[1] = beta;
+			angle_rad[2] = gamma;
+			for (int i = 0; i < 3; i++) {
+				angle_grad[i] = angle_rad[i] * RadtoGrad;
+			}
+		}
+	}
+	const _T & Lat_dir(const int i) const{
 		return lat_dir[i];
 	}
-	_T Angle_rad(const int i) const{
+	const _T & Angle_rad(const int i) const{
 		return angle_rad[i];
 	}
-	_T Angle_grad(const int i) const{
+	const _T & Angle_grad(const int i) const{
 		return angle_grad[i];
 	}
-	tMatrix<_T> FracToCart() const {
+	const tMatrix<_T> & FracToCart() const {
 		return fracToCart;
 	}
-	tMatrix<_T> CartToFrac() const {
+	const tMatrix<_T> & CartToFrac() const {
 		return cartToFrac;
 	}
 };

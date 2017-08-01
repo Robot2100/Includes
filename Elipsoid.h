@@ -98,6 +98,8 @@ public:
 			for(int i = 0; i < size; i++) {
 				vecPoints[i] = FTC*vecPoints[i];
 			}
+			is_fractal = false;
+
 		}
 		if(useCartCenter == false) {
         	ELIPSOID_RESULT calcres = CalculateCenter();
@@ -112,9 +114,9 @@ public:
             dinmat = Dinmat();
         }
         for(int i = 0; i < size; i++) {
-            flo dx = vecPoints[i].a[0]-cartCenter.a[0];
-            flo dy = vecPoints[i].a[1] -cartCenter.a[1];
-            flo dz = vecPoints[i].a[2] -cartCenter.a[2];
+            flo dx = vecPoints[i].a[0] - cartCenter.a[0];
+            flo dy = vecPoints[i].a[1] - cartCenter.a[1];
+            flo dz = vecPoints[i].a[2] - cartCenter.a[2];
             dinmat.U[0] += dx*dx;
 			dinmat.U[1] += dy*dy;
 			dinmat.U[2] += dz*dz;
@@ -132,9 +134,10 @@ public:
 		std::stringstream ss;
 		if (!(useLabel && useDinmat))
 			throw "Elipsoid Output Error!";
-		ss.precision(6);
-		ss << label << number << ' ' << type << ' ' << fracCenter.a[0] << ' ' << fracCenter.a[1] << ' ' << fracCenter.a[2] << ' '
-			<< dinmat.U[0] << ' ' << dinmat.U[1] << ' ' << dinmat.U[2] << " =\n " 
+		ss.precision(5);
+		ss.setf(std::stringstream::fixed);
+		ss << label << number << ' ' << type << ' ' << fracCenter.a[0] << ' ' << fracCenter.a[1] << ' ' << fracCenter.a[2]
+			<< " 11.0000 " << dinmat.U[0] << ' ' << dinmat.U[1] << ' ' << dinmat.U[2] << " =\n "
 			<< dinmat.U[5] << ' ' << dinmat.U[4] << ' ' << dinmat.U[3];
 		return std::string(ss.str());
 	}
