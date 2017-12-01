@@ -47,30 +47,25 @@ private:
     std::vector<Point> vecPoints;
     bool useVecPoints = false;
 
-	Cell * pCell = nullptr;
+	const Cell * pCell = 0;
 	bool useCell = false;
 public:
     Elipsoid() {};
     ~Elipsoid() {};
-	void DefineLabel(std::string & s, const int num, const int typ)  {
-		label = s;
-		type = typ;
-		number = num;
-		useLabel = true;
-	}
-	void DefineCell(Cell & s) {
+	void DefineLabel(std::string & s, const int num, const int typ) noexcept 
+		: label(s), type(typ), number(num), uselabel(true){}
+	void DefineCell(const Cell & s) noexcept {
 		pCell = &s;
 		useCell = true;
 	}
-    ELIPSOID_RESULT AddVecPoints(std::vector<Point> & in_points, bool is_fract = true) {
-        if(in_points.size() == 0)
-            return ELIPSOID_RESULT::WrongParameters;
+	void AddVecPoints(std::vector<Point> & in_points, bool is_fract = true) {
+		if (in_points.size() == 0)
+			throw std::invalid_argument("");
 		is_fractal = is_fract;
-        vecPoints.swap(in_points);
-        useVecPoints = true;
-        return ELIPSOID_RESULT::OK;
-    }
-    ELIPSOID_RESULT CalculateCenter() {
+		vecPoints.swap(in_points);
+		useVecPoints = true;
+	}
+    ELIPSOID_RESULT CalculateCenter() noexcept {
         if(useVecPoints == false)
             return ELIPSOID_RESULT::ZeroVecPoints;
         Point cent(0,0,0);
@@ -88,13 +83,13 @@ public:
 		}
         return ELIPSOID_RESULT::OK;
     }
-    ELIPSOID_RESULT CalculateDinmat() {
+    ELIPSOID_RESULT CalculateDinmat() noexcept {
 		if(is_fractal == true) {
 			if(useCell == false)
 				return ELIPSOID_RESULT::UndefenedCell;
 			useCartCenter = false;
 			int size = vecPoints.size();
-			Matrix FTC = pCell->FracToCart();
+			Matrix FTC (pCell->FracToCart());
 			for(int i = 0; i < size; i++) {
 				vecPoints[i] = FTC*vecPoints[i];
 			}
@@ -133,7 +128,7 @@ public:
 	std::string OutShelxString() const {
 		std::stringstream ss;
 		if (!(useLabel && useDinmat))
-			throw "Elipsoid Output Error!";
+			throw std::logic_error("Unprepared Elipsoid");
 		ss.precision(5);
 		ss.setf(std::stringstream::fixed);
 		ss << label << number << ' ' << type << ' ' << fracCenter.a[0] << ' ' << fracCenter.a[1] << ' ' << fracCenter.a[2]

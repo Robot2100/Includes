@@ -119,18 +119,14 @@ public:
 	}
 };
 
-template <std::size_t K>
-class Param2;
 class BaseParam {
 protected:
 	const char * param;
 	const char * desc;
 public:
 	template<std::size_t N, std::size_t M>
-	constexpr BaseParam(const char(&p)[N], const char(&des)[M])
-		: param(p), desc(des) {}
-	constexpr BaseParam() : param(nullptr), desc(nullptr) {
-	}
+	constexpr BaseParam(const char(&p)[N], const char(&des)[M]) : param(p), desc(des) {}
+	constexpr BaseParam() : param(nullptr), desc(nullptr) {}
 	template <std::size_t K>
 	friend class Param;
 };
@@ -141,7 +137,7 @@ protected:
 
 public:
 	constexpr ConstParam(const BaseParam (&in) [N]) : par(in) {
-		static_assert(N != 0, "ConstParam<size_t N> : N mustn't be 0");
+		static_assert(N > 0, "ConstParam<size_t N> : N must be 1 or greater");
 	}
 	template <size_t K>
 	friend class Param;
@@ -154,10 +150,10 @@ protected:
 	std::vector<std::string> strout[N];
 	int noname = -1;
 public:
-	Param(const ConstParam<N> & par) : CP(&par) {
+	Param(const ConstParam<N> * par) : CP(par) {
 		for (int i = 0; i < N; i++) {
 			found[i] = false;
-			if (std::strcmp(par.par[i].param, "") == 0) {
+			if (std::strcmp(par->par[i].param, "") == 0) {
 				if (debug) {
 					if (noname != -1) {
 						MyError::StopFatalError("2 or more noname Parameters");

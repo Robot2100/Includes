@@ -40,7 +40,7 @@ struct tPoint
 
 	tPoint<_T> operator-() const
 	{
-		return tPoint<_T>(-this->a[0], -this->a[1], -this->a[2]);
+		return tPoint<_T>(-a[0], -this->a[1], -this->a[2]);
 	}
 	tPoint<_T> operator+(const tPoint<_T> & right) const
 	{

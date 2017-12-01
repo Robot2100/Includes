@@ -14,19 +14,16 @@ class tMatrix
 {
 	static_assert(std::is_floating_point<_T>::value,"type \"tMatrix<_T>\" is floating-point-based type.");
 private:
-	unsigned int size_a, size_b;
+	size_t size_a, size_b;
 	std::vector<std::vector<_T> > A;
 	void resize(const unsigned int a, const unsigned int b) {
-		if(a <= 0 || b <= 0)
-			throw MyError(std::string("tMatrix<_T>::resize(int,int) : Parameters must be greater than zero."), nsError::Exit | nsError::Error);
+		if (a == 0 || b == 0)
+			throw std::invalid_argument("tMatrix<_T>::resize(int,int) : Parameters must be greater than zero.");
 		size_a = a;
 		size_b = b;
-		A.resize(a);
-		for(unsigned int i = 0; i < a; i++) {
-			A[i].resize(b);
-		}
+		A.resize(a, std::vector<_T>(b, static_cast<_T>(0.0f)));
 	}
-	_T HorDet(const unsigned int line) const {
+	_T HorDet(const unsigned int line) const noexcept {
 		int mod;
 		_T det = 0;
 		if(line%2 == 1) mod = -1;
@@ -37,7 +34,7 @@ private:
 		}
 		return det;
 	}
-	_T VerDet(const unsigned int line) const{
+	_T VerDet(const unsigned int line) const noexcept {
 		int mod;
 		_T det = 0;
 		if(line%2 == 1) mod = -1;
@@ -49,38 +46,11 @@ private:
 		return det;
 	}
 public:
-	tMatrix(const unsigned int a = 3, const unsigned int b = 3) {
-		try {
-			resize(a,b);
-		}
-		catch(MyError & er) {
-			er.mes = "tMatrix<_T>::tMatrix<_T>(int,int) : Parameters must be greater than zero.";
-			er.Execute();
-		}
-		if(a==b) {
-			for(unsigned int i = 0; i < a; i++) {
-				for(unsigned int j = 0; j < b; j++) {
-					if(i==j) A[i][j] = (_T)1;
-					else A[i][j] = (_T)0;
-				}
-			}
-		}
-		else {
-			for(unsigned int i = 0; i < a; i++) {
-				for(int j = 0; j < b; j++) {
-					A[i][j] = (_T)0;
-				}
-			}
-		}
+	explicit tMatrix(const unsigned int a = 3, const unsigned int b = 3) noexcept {
+		resize(a,b);
 	}
 	tMatrix(_T** input_massive, const unsigned int a = 3, const unsigned int b = 3) {
-		try {
-			resize(a,b);
-		}
-		catch(MyError & er) {
-			er.mes = "tMatrix<_T>::tMatrix<_T>(_T**,int,int) : Parameters must be greater than zero.";
-			er.Execute();
-		}
+		resize(a,b);
 		for(int i = 0; i < a; i++) {
 			for(int j = 0; j < b; j++) {
 				A[i][j] = input_massive[i][j];
@@ -88,44 +58,34 @@ public:
 		}
 	}
 	tMatrix(_T * input_massive, const unsigned int a = 3, const unsigned int b = 3) {
-		try {
-			resize(a,b);
-		}
-		catch(MyError & er) {
-			er.mes = "tMatrix<_T>::tMatrix<_T>(_T*,int,int) : Parameters must be greater than zero.";
-			er.Execute();
-		}
+		resize(a,b);
 		for(int i = 0; i < a; i++) {
 			for(int j = 0; j < b; j++) {
 				A[i][j] = input_massive[i*a+j];
 			}
 		}
 	}
-	inline int sizeA() const {
+	inline int sizeA() const noexcept {
 		return size_a;
 	}
-	inline int sizeB() const {
+	inline int sizeB() const noexcept {
 		return size_b;
 	}
 	inline _T & El(const unsigned int a, const unsigned int b) {
-		if(a >= size_a || b >= size_b)
-			throw MyError(std::string("tMatrix<_T>::El(int,int) : Parameter is out of the range."), nsError::Exit | nsError::Error);
 		return A[a][b];
 	}
 	inline const _T & El(const unsigned int a, const unsigned int b) const {
-		if(a >= size_a || b >= size_b)
-			throw MyError(std::string("tMatrix<_T>::El(int,int) : Parameter is out of the range."), nsError::Exit | nsError::Error);
 		return A[a][b];
 	}
-	tMatrix<_T> operator*(const tMatrix<_T> & right) {
+	tMatrix<_T> operator*(const tMatrix<_T> & right) const {
 		if(this->size_b != right.size_a)
-			throw MyError(std::string("tMatrix<_T>::operator*(tMatrix<_T>,tMatrix<_T>) : Wrong sizes of matrixes."),nsError::Exit | nsError::Error);
-		const int & sa = this->size_a;
-		const int & sb = right.size_b;
-		const int & sm = this->size_b;
+			throw std::length_error("tMatrix<_T>::operator*(tMatrix<_T>) : Matrixes can't be multiplied (by sizes).");
+		const size_t & sa = this->size_a;
+		const size_t & sb = right.size_b;
+		const size_t & sm = this->size_b;
 		tMatrix<_T> res(sa,sb);
-		for(int i = 0; i < sa; i++) {
-			for(int j = 0; j < sb; j++) {
+		for(size_t i = 0; i < sa; i++) {
+			for(size_t j = 0; j < sb; j++) {
 				_T sum = (_T)0;
 				for(int k = 0; k < sm; k++) {
 					sum += this->El(i,k) * right.El(k,j);
@@ -135,9 +95,9 @@ public:
 		}
 		return res;
 	}
-	std::vector<_T> operator*(const std::vector<_T> & right) {
+	std::vector<_T> operator*(const std::vector<_T> & right) const {
 		if(this->size_b != right.size())
-			throw MyError("tMatrix<_T>::operator*(tMatrix<_T>,std::vector<_T>) : Wrong size of matrix or vector.",nsError::Exit | nsError::Error);
+			throw std::length_error("tMatrix<_T>::operator*(tMatrix<_T>,std::vector<_T>) : Wrong size of matrix or vector.");
 		std::vector<_T> res(this->size_a, 0);
 		for(int i = 0; i < this->size_a; i++) {
 			for(int j = 0; j < this->size_b; j++) {
@@ -146,19 +106,20 @@ public:
 		}
 		return res;
 	}
-	tMatrix<_T> operator/(const _T right) {
+	tMatrix<_T> operator/(const _T right) const noexcept{
+		tMatrix<_T> left(*this);
 		for(int i = 0; i < this->size_a; i++) {
 			for(int j = 0; j < this->size_b; j++) {
-				this->A[i][j]/=right;
+				left.A[i][j]/=right;
 			}
 		}
 		return left;
 	}
 	tMatrix<_T> Minor(const unsigned int a, const unsigned int b) const {
 		if(a >= size_a || b >= size_b)
-			throw MyError("tMatrix<_T>::Minor(int,int) : Parameter is out of the range.", nsError::Exit | nsError::Error);
-		if(size_a <= 1 || size_b <= 1)
-			throw MyError("tMatrix<_T>::Minor(int,int) : Cannot take a minor of size(1) matrix.", nsError::Exit | nsError::Error);
+			throw std::out_of_range("tMatrix<_T>::Minor(int,int)");
+		if(size_a == 1 || size_b == 1)
+			throw std::length_error("tMatrix<_T>::Minor(int,int) : Cannot take a minor of size(1) matrix.");
 		tMatrix<_T> res(size_a - 1, size_b - 1);
 		for(int i = 0, i1 = 0; i < size_a; i++) {
 			if(i==a) continue;
@@ -171,7 +132,7 @@ public:
 		}
 		return res;
 	}
-	tMatrix<_T> Transponate() const {
+	tMatrix<_T> Transponate() const noexcept{
 		tMatrix<_T> res(size_b,size_a);
 		for(int i = 0; i < size_a; i++) {
 			for(int j = 0; j < size_b; j++) {
@@ -182,7 +143,7 @@ public:
 	}
 	tMatrix<_T> Invert() const {
 		if (size_a != size_b)
-			throw MyError("tMatrix<_T>::Invert() : Matrix must be square.", nsError::Exit | nsError::Error);
+			throw std::length_error("tMatrix<_T>::Invert() : Matrix must be square.");
 		tMatrix<_T> res(size_a, size_a);
 		tMatrix<_T> copy(*this);
 		for (int k = 0; k < size_a; k++) {
@@ -202,9 +163,18 @@ public:
 		}
 		return res;
 	}
+	_T Trace() const {
+		if (size_a != size_b)
+			throw std::length_error("tMatrix<_T>::Trace() : Matrix must be square.");
+		_T res = 0;
+		for (size_t i = 0; i < size_a; i++) {
+			res += A[i][i];
+		}
+		return res / size_a;
+	}
 	_T Det(const unsigned int line = 0, const bool horisontaly = true) const {
 		if(size_a != size_b)
-			throw MyError("tMatrix<_T>::Det(int=,bool=) : Matrix must be square.", nsError::Exit | nsError::Error);
+			throw std::length_error("tMatrix<_T>::Det(int=,bool=) : Matrix must be square.");
 		switch(size_a) {
 		case 1:
 			return A[0][0];
@@ -215,7 +185,7 @@ public:
 			- A[0][2]*A[1][1]*A[2][0] - A[0][1]*A[1][0]*A[2][2] - A[0][0]*A[1][2]*A[2][1];
 		}
 		if(line >= size_a)
-			throw MyError("tMatrix<_T>::Minor(int,int) : Parameter is out of the range.", nsError::Exit | nsError::Error);
+			throw std::out_of_range("tMatrix<_T>::Det(int=,bool=)");
 		if(horisontaly) {
 			return HorDet(line);
 		} else {
@@ -225,10 +195,10 @@ public:
 };
 
 template<class _T = flo>
-tMatrix<_T> operator*(const _T left, const tMatrix<_T> right) {
-	for (int i = 0; i < right.size_a; i++) {
-		for (int j = 0; j < right.size_b; j++) {
-			right.A[i][j] *= left;
+tMatrix<_T> operator*(const _T left, tMatrix<_T> right) noexcept{
+	for (int i = 0; i < right.sizeA(); i++) {
+		for (int j = 0; j < right.sizeB(); j++) {
+			right.El(i,j) *= left;
 		}
 	}
 	return right;
