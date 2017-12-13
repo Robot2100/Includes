@@ -15,4 +15,6 @@ constexpr bool debug = false;
 #include "Matrix.h"
 #include "Dinmat.h"
 #include "Elipsoid.h"
+#include "Hkl.h"
+#include "Ins.h"
 #endif
