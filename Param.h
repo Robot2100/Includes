@@ -7,8 +7,10 @@
 #include <iostream>
 #include <sstream>
 #include "Error.h"
-class OldParam
+class [[deprecated]]OldParam
 {
+#pragma warning(push)
+#pragma warning( disable : 4996 )
 protected:
 	std::vector<bool> found;
 	std::vector<std::vector<std::string>> names;
@@ -48,7 +50,7 @@ public:
 					nonamestr.push_back(argv[i]);
 				}
 				else {
-					MyError::StopFatalError("Didn't find \"-\" before parameter");
+					throw std::invalid_argument("Didn't find \"-\" before parameter");
 				}
 			}
 			else
@@ -67,7 +69,7 @@ public:
 						}
 					}
 				}
-				MyError::StopFatalError("Unknown parameter: " + std::string(argv[i]));
+				throw std::invalid_argument("Unknown parameter: " + std::string(argv[i]));
 			}
 			else {
 				//add new strout
@@ -81,7 +83,7 @@ public:
 			if (found[i] == false)
 				continue;
 			if (minargs[i] >(int)strout[i].size() || maxargs[i] < (int)strout[i].size()) {
-				MyError::StopFatalError("Parameter has wrong number of args!");
+				throw std::invalid_argument("Parameter has wrong number of args!");
 			}
 		}
 	}
@@ -117,6 +119,7 @@ public:
 			std::cout <<descriptions[i] << std::endl;
 		}
 	}
+#pragma warning(pop)
 };
 
 class BaseParam {
@@ -150,20 +153,16 @@ protected:
 	std::vector<std::string> strout[N];
 	int noname = -1;
 public:
-	Param(const ConstParam<N> * par) : CP(par) {
+	Param(const ConstParam<N> * par) noexcept : CP(par) {
 		for (int i = 0; i < N; i++) {
 			found[i] = false;
 			if (std::strcmp(par->par[i].param, "") == 0) {
-				if (debug) {
-					if (noname != -1) {
-						MyError::StopFatalError("2 or more noname Parameters");
-					}
-				}
+				_ASSERTE(noname == -1);
 				noname = i;
 			}
 		}
 	}
-	void TakeAgrs(int argn, char * argv[], void(*func)(const int &, std::vector<std::string> &))
+	void TakeAgrs(int argn, char * argv[], void(*func)(const int, std::vector<std::string> &))
 	{
 		//int k = -1, l = -1;
 		if (argn < 2) return;
@@ -175,10 +174,7 @@ public:
 					res.push_back(argv[i]);
 				}
 				else {
-					if (debug)
-						MyError::StopFatalError("Didn't find \"-\" before parameter");
-					else
-						MyError::FatalError("Didn't find \"-\" before parameter");
+					throw std::invalid_argument("Didn't find \"-\" before parameter");
 				}
 			}
 			else
@@ -204,10 +200,7 @@ public:
 					}
 				}
 				if (last == -1) {
-					if (debug)
-						MyError::StopFatalError("Unknown parameter: " + std::string(argv[i]));
-					else
-						MyError::FatalError("Unknown parameter: " + std::string(argv[i]));
+					throw std::invalid_argument("Unknown parameter: " + std::string(argv[i]));
 				}
 			}
 			else {
@@ -223,7 +216,7 @@ public:
 		func(-1, res);
 	}
 private:
-	void help(std::vector<std::string> & out) const
+	void help(std::vector<std::string> & out) const noexcept
 	{
 		std::vector<std::string> res;
 		stringstream sstemp;

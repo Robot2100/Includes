@@ -3,7 +3,6 @@
 #define MATRIX_H
 
 #include <vector>
-#include "Error.h"
 
 __if_not_exists (flo) {
 	typedef float flo;
@@ -16,65 +15,76 @@ class tMatrix
 private:
 	size_t size_a, size_b;
 	std::vector<std::vector<_T> > A;
-	void resize(const unsigned int a, const unsigned int b) {
-		if (a == 0 || b == 0)
-			throw std::invalid_argument("tMatrix<_T>::resize(int,int) : Parameters must be greater than zero.");
+	void resize(const size_t a, const size_t b) noexcept {
+		_ASSERTE(a != 0 && b != 0);
 		size_a = a;
 		size_b = b;
 		A.resize(a, std::vector<_T>(b, static_cast<_T>(0.0f)));
 	}
-	_T HorDet(const unsigned int line) const noexcept {
-		int mod;
-		_T det = 0;
-		if(line%2 == 1) mod = -1;
-		else mod = 1;
-		for(unsigned int i = 0; i < size_b; i++, mod*=(-1)) {
-			if(A[line][i] == (_T)0) continue;
-			det+=mod*A[line][i]*((Minor(line,i)).Det());
-		}
-		return det;
+	void resizeU(const size_t a, const size_t b) noexcept {
+		_ASSERTE(a != 0 && b != 0);
+		size_a = a;
+		size_b = b;
+		A.resize(a, std::vector<_T>(b));
 	}
-	_T VerDet(const unsigned int line) const noexcept {
-		int mod;
-		_T det = 0;
-		if(line%2 == 1) mod = -1;
-		else mod = 1;
-		for(unsigned int i = 0; i < size_a; i++, mod*=(-1)) {
-			if(A[i][line] == (_T)0) continue;
-			det+=mod*A[i][line]*((Minor(i,line)).Det());
-		}
-		return det;
-	}
+
 public:
-	explicit tMatrix(const unsigned int a = 3, const unsigned int b = 3) noexcept {
-		resize(a,b);
+	explicit tMatrix(const size_t a = 3, const size_t b = 3, bool empty = false) noexcept {
+		if (empty == true) resizeU(a, b);
+		else resize(a, b);
 	}
-	tMatrix(_T** input_massive, const unsigned int a = 3, const unsigned int b = 3) {
-		resize(a,b);
-		for(int i = 0; i < a; i++) {
-			for(int j = 0; j < b; j++) {
+	tMatrix(const tMatrix<_T> & right) noexcept : A(right.A), size_a(right.size_a), size_b(right.size_b) {}
+	tMatrix(tMatrix<_T> && right) noexcept : A(std::move(right.A)), size_a(right.size_a), size_b(right.size_b) {}
+	tMatrix(const _T** input_massive, const size_t a = 3, const size_t b = 3) noexcept {
+		resizeU(a,b);
+		for(size_t i = 0; i < a; i++) {
+			for(size_t j = 0; j < b; j++) {
 				A[i][j] = input_massive[i][j];
 			}
 		}
 	}
-	tMatrix(_T * input_massive, const unsigned int a = 3, const unsigned int b = 3) {
-		resize(a,b);
-		for(int i = 0; i < a; i++) {
-			for(int j = 0; j < b; j++) {
-				A[i][j] = input_massive[i*a+j];
+	tMatrix(const _T * input_massive, const size_t a = 3, const size_t b = 3) noexcept {
+		resizeU(a, b);
+		for (size_t i = 0; i < a; i++) {
+			for (size_t j = 0; j < b; j++) {
+				A[i][j] = input_massive[i*a + j];
 			}
 		}
 	}
-	inline int sizeA() const noexcept {
+	explicit tMatrix(const std::vector<std::vector<_T>> & in) noexcept : A(in) {
+		size_a = A.size();
+		size_b = A[0].size();
+	}
+	explicit tMatrix(std::vector<std::vector<_T>> && in) noexcept : A(in) {
+		size_a = A.size();
+		size_b = A[0].size();
+	}
+	tMatrix<_T> & operator= (const tMatrix<_T> & other) noexcept {
+		if (&other != this) {
+			A = other.A;
+			size_a = other.size_a;
+			size_b = other.size_b;
+		}
+		return *this;
+	}
+	tMatrix<_T> & operator= (tMatrix<_T> && other) noexcept {
+		if (&other != this) {
+			A = std::move(other.A);
+			size_a = other.size_a;
+			size_b = other.size_b;
+		}
+		return *this;
+	}
+	inline const int sizeA() const noexcept {
 		return size_a;
 	}
-	inline int sizeB() const noexcept {
+	inline const int sizeB() const noexcept {
 		return size_b;
 	}
-	inline _T & El(const unsigned int a, const unsigned int b) {
+	inline _T & El(const size_t a, const size_t b) {
 		return A[a][b];
 	}
-	inline const _T & El(const unsigned int a, const unsigned int b) const {
+	inline const _T & El(const size_t a, const size_t b) const {
 		return A[a][b];
 	}
 	tMatrix<_T> operator*(const tMatrix<_T> & right) const {
@@ -87,7 +97,7 @@ public:
 		for(size_t i = 0; i < sa; i++) {
 			for(size_t j = 0; j < sb; j++) {
 				_T sum = (_T)0;
-				for(int k = 0; k < sm; k++) {
+				for(size_t k = 0; k < sm; k++) {
 					sum += this->El(i,k) * right.El(k,j);
 				}
 				res.El(i,j) = sum;
@@ -115,7 +125,7 @@ public:
 		}
 		return left;
 	}
-	tMatrix<_T> Minor(const unsigned int a, const unsigned int b) const {
+	tMatrix<_T> Minor(size_t a, size_t b) const {
 		if(a >= size_a || b >= size_b)
 			throw std::out_of_range("tMatrix<_T>::Minor(int,int)");
 		if(size_a == 1 || size_b == 1)
@@ -130,12 +140,12 @@ public:
 			}
 			i1++;
 		}
-		return res;
+		return std::move(res);
 	}
-	tMatrix<_T> Transponate() const noexcept{
+	tMatrix<_T> Transponate() const noexcept {
 		tMatrix<_T> res(size_b,size_a);
-		for(int i = 0; i < size_a; i++) {
-			for(int j = 0; j < size_b; j++) {
+		for(size_t i = 0; i < size_a; i++) {
+			for(size_t j = 0; j < size_b; j++) {
 				res.El(j,i) = A[i][j];
 			}
 		}
@@ -144,24 +154,26 @@ public:
 	tMatrix<_T> Invert() const {
 		if (size_a != size_b)
 			throw std::length_error("tMatrix<_T>::Invert() : Matrix must be square.");
-		tMatrix<_T> res(size_a, size_a);
-		tMatrix<_T> copy(*this);
-		for (int k = 0; k < size_a; k++) {
-			flo temp = copy.A[k][k];
-			for (int i = 0; i < size_a; i++) {
-				copy.A[k][i] /= temp;
-				res.A[k][i] /= temp;
-			}
-			for (int i = 0; i < size_a; i++) {
-				if (i == k) continue;
-				temp = copy.A[i][k];
-				for (int j = 0; j < size_a; j++) {
-					copy.A[i][j] -= temp*copy.A[k][j];
-					res.A[i][j] -= temp*res.A[k][j];
-				}
+		tMatrix<_T> res(size_a, size_a, true);
+		_T det = this->Det();
+		if(det == _T(0))
+			throw std::runtime_error("tMatrix<_T>::Invert() : Determinant equal zero.");
+		for (size_t k = 0; k < size_a; k++) {
+			for (size_t i = 0; i < size_a; i++) {
+				res.A[k][i] = (this->Minor(i, k).Det()) / det;
+				if (((i + k) & 1) == 1) res.A[k][i] *= -1;
 			}
 		}
 		return res;
+	}
+	tMatrix<_T> Modul() const {
+		tMatrix<_T> ret(size_a, size_b, true);
+		for (size_t i = 0; i < size_a; i++) {
+			for (size_t j = 0; j < size_b; j++) {
+				ret.A[i][j] = abs(A[i][j]);
+			}
+		}
+		return ret;
 	}
 	_T Trace() const {
 		if (size_a != size_b)
@@ -172,7 +184,7 @@ public:
 		}
 		return res / size_a;
 	}
-	_T Det(const unsigned int line = 0, const bool horisontaly = true) const {
+	_T Det() const {
 		if(size_a != size_b)
 			throw std::length_error("tMatrix<_T>::Det(int=,bool=) : Matrix must be square.");
 		switch(size_a) {
@@ -184,18 +196,19 @@ public:
 			return A[0][0]*A[1][1]*A[2][2] + A[0][1]*A[1][2]*A[2][0] + A[0][2]*A[1][0]*A[2][1]
 			- A[0][2]*A[1][1]*A[2][0] - A[0][1]*A[1][0]*A[2][2] - A[0][0]*A[1][2]*A[2][1];
 		}
-		if(line >= size_a)
-			throw std::out_of_range("tMatrix<_T>::Det(int=,bool=)");
-		if(horisontaly) {
-			return HorDet(line);
-		} else {
-			return VerDet(line);
+		int mod = 1;
+		_T det(0);
+		for (unsigned int i = 0; i < size_b; i++, mod *= (-1)) {
+			if (A[0][i] == (_T)0) continue;
+			det += mod*A[0][i] * ((this->Minor(0, i)).Det());
 		}
+		return det;
 	}
+
 };
 
 template<class _T = flo>
-tMatrix<_T> operator*(const _T left, tMatrix<_T> right) noexcept{
+tMatrix<_T> operator*(const _T left, tMatrix<_T> right) noexcept {
 	for (int i = 0; i < right.sizeA(); i++) {
 		for (int j = 0; j < right.sizeB(); j++) {
 			right.El(i,j) *= left;

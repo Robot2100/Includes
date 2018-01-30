@@ -15,7 +15,7 @@ __if_not_exists (flo) {
 	typedef float flo;
 }
 
-enum ELIPSOID_RESULT {
+enum [[deprecated]] ELIPSOID_RESULT {
 	OK = 0,
 	WrongParameters,
 	ZeroVecPoints,
@@ -23,11 +23,11 @@ enum ELIPSOID_RESULT {
 	Uncalculated
 };
 
-class Elipsoid {
-private:
-    const flo RadtoGrad = static_cast<flo> (90/1.57079632679489661923);
-	const flo GradtoRad = static_cast<flo> (1.57079632679489661923/90);
-
+class [[deprecated]] Elipsoid {
+public:
+#pragma warning(push)
+#pragma warning( disable : 4996 )
+	
     Point cartCenter = Point(0,0,0);
 	bool useCartCenter = false;
 
@@ -47,30 +47,31 @@ private:
     std::vector<Point> vecPoints;
     bool useVecPoints = false;
 
-	const Cell * pCell = 0;
-	bool useCell = false;
+	Cell * pCell = 0;
 public:
-    Elipsoid() {};
-    ~Elipsoid() {};
-	void DefineLabel(std::string & s, const int num, const int typ) noexcept 
-		: label(s), type(typ), number(num), uselabel(true){}
-	void DefineCell(const Cell & s) noexcept {
-		pCell = &s;
-		useCell = true;
+	void DefineLabel(std::string & s, const int num, const int typ) noexcept {
+		label = s;
+		type = typ;
+		number = num;
+		useLabel = true;
 	}
-	void AddVecPoints(std::vector<Point> & in_points, bool is_fract = true) {
+	void DefineCell(Cell & s) noexcept {
+		pCell = &s;
+	}
+	void AddVecPoints(std::vector<Point> && in_points, const bool is_fract = true) noexcept {
 		if (in_points.size() == 0)
-			throw std::invalid_argument("");
+			useVecPoints = false;
+		else
+			useVecPoints = true;
 		is_fractal = is_fract;
-		vecPoints.swap(in_points);
-		useVecPoints = true;
+		vecPoints = in_points;
 	}
     ELIPSOID_RESULT CalculateCenter() noexcept {
         if(useVecPoints == false)
             return ELIPSOID_RESULT::ZeroVecPoints;
         Point cent(0,0,0);
-        int size = vecPoints.size();
-        for(int i = 0; i < size; i++)
+        size_t size = vecPoints.size();
+        for(size_t i = 0; i < size; i++)
             cent += vecPoints[i];
         cent = cent * static_cast<flo> (1.0 / size);
 		if (is_fractal) {
@@ -84,13 +85,13 @@ public:
         return ELIPSOID_RESULT::OK;
     }
     ELIPSOID_RESULT CalculateDinmat() noexcept {
+		if (pCell == 0)
+			return ELIPSOID_RESULT::UndefenedCell;
 		if(is_fractal == true) {
-			if(useCell == false)
-				return ELIPSOID_RESULT::UndefenedCell;
 			useCartCenter = false;
-			int size = vecPoints.size();
+			size_t size = vecPoints.size();
 			Matrix FTC (pCell->FracToCart());
-			for(int i = 0; i < size; i++) {
+			for(size_t i = 0; i < size; i++) {
 				vecPoints[i] = FTC*vecPoints[i];
 			}
 			is_fractal = false;
@@ -136,6 +137,7 @@ public:
 			<< dinmat.U[5] << ' ' << dinmat.U[4] << ' ' << dinmat.U[3];
 		return std::string(ss.str());
 	}
+#pragma warning(pop)
 };
 
 #endif

@@ -6,13 +6,15 @@
 #if defined(_CONSOLE)
 #include <iostream>
 #include <string>
-namespace nsError {
+namespace [[deprecated]] nsError {
 	const int Warn = 1;
 	const int Error = 2;
 	const int Enter = 4;
 	const int Exit = 8;
 };
-class MyError {
+class [[deprecated]] MyError { 
+#pragma warning(push)
+#pragma warning( disable : 4996 )   
 private:
     static void Enter() noexcept {
         std::cerr << "Press \'Enter\' to continue." << std::endl;
@@ -89,6 +91,8 @@ public:
     inline static void StopFatalError(const std::string & mess) noexcept {
         Hard(mess, false, true, true);
     }
+
+#pragma warning( pop ) 
 };
 
 #else // ndef _CONSOLE
