@@ -139,7 +139,7 @@ protected:
 	const BaseParam *par;
 
 public:
-	constexpr ConstParam(const BaseParam (&in) [N]) : par(in) {
+	constexpr ConstParam(const BaseParam (in) [N]) : par(in) {
 		static_assert(N > 0, "ConstParam<size_t N> : N must be 1 or greater");
 	}
 	template <size_t K>

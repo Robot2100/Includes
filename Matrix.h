@@ -131,9 +131,9 @@ public:
 		if(size_a == 1 || size_b == 1)
 			throw std::length_error("tMatrix<_T>::Minor(int,int) : Cannot take a minor of size(1) matrix.");
 		tMatrix<_T> res(size_a - 1, size_b - 1);
-		for(int i = 0, i1 = 0; i < size_a; i++) {
+		for(size_t i = 0, i1 = 0; i < size_a; i++) {
 			if(i==a) continue;
-			for(int j = 0, j1 = 0; j < size_b; j++) {
+			for(size_t j = 0, j1 = 0; j < size_b; j++) {
 				if(j==b) continue;
 				res.El(i1,j1) = A[i][j];
 				j1++;

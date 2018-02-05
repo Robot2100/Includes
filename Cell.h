@@ -41,7 +41,7 @@ protected:
 		angle_rad[1] = acos(fracToCart.El(0,2) / lat_dir[2]);
 		angle_rad[0] = acos(temp/lat_dir[2]);
 		for(int i = 0; i < 3; i++)
-			angle_grad[i] = angle_rad[i] * RadtoGrad;
+			angle_grad[i] = angle_rad[i] * (_T)RadtoGrad;
 	}
 	void CreateFromCartToFrac(const tMatrix<_T> & Mat) {
 		cartToFrac = Mat;

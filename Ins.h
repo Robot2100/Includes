@@ -199,7 +199,7 @@ namespace nsShelxFile {
 			if (is_fractal == false) {
 				Center = pCell->FracToCart() * Center;
 			}
-			for (int i = 0; i < size; i++) {
+			for (size_t i = 0; i < size; i++) {
 				Point d(vecPoints[i].a[0] - Center.a[0],
 						vecPoints[i].a[1] - Center.a[1],
 						vecPoints[i].a[2] - Center.a[2]);
