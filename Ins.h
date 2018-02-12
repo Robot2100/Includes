@@ -173,63 +173,39 @@ namespace nsShelxFile {
 			strcpy_s(label, lab);
 		}
 		Atom() noexcept : type(0u), occup(flo(0)) {}
-	};
-	struct AtomData {
-		Atom atom;
-		std::vector <Point>  vecPoints;
-		bool is_fractal;
-		Cell * pCell;
-		void DefineLabel(const char * s, const int typ) noexcept {
-			strcpy_s(atom.label, s);
-			atom.type = typ;
-		}	
-		void AddVecPoints(std::vector<Point> && in_points, const bool is_fract = true) noexcept {
-			is_fractal = is_fract;
-			vecPoints = std::move(in_points);
-		}
-		void DefineCell(Cell * s) noexcept {
-			pCell = s;
-		}
-		bool CalculateDinmat() noexcept {
+		Atom(const char *lab, const unsigned int typ, const flo occupancy, Cell & cell, const std::vector<Point> & vecPoints, bool is_fractal = true) : type(typ), occup(occupancy) {
 			size_t size = vecPoints.size();
-			if (size == 0 || pCell == 0) return false;
-			if (CalculateCenter() == false) return false;
-			atom.dinmat = Dinmat();
-			Point Center(atom.point);
+			if (size == 0)
+				throw std::invalid_argument("Size of vecPoints == 0");
+			point = Point(0, 0, 0);
+			for (size_t i = 0; i < size; i++)
+				point += vecPoints[i];
+			point *= static_cast<flo> (1.0 / size);
 			if (is_fractal == false) {
-				Center = pCell->FracToCart() * Center;
+				point = cell.CartToFrac() * point;
+			}
+			dinmat = Dinmat();
+			Point Center(point);
+			if (is_fractal == false) {
+				Center = cell.FracToCart() * Center;
 			}
 			for (size_t i = 0; i < size; i++) {
 				Point d(vecPoints[i].a[0] - Center.a[0],
-						vecPoints[i].a[1] - Center.a[1],
-						vecPoints[i].a[2] - Center.a[2]);
+					vecPoints[i].a[1] - Center.a[1],
+					vecPoints[i].a[2] - Center.a[2]);
 				if (is_fractal == true) {
-					d = pCell->CartToFrac() * d;
+					d = cell.CartToFrac() * d;
 				}
-				atom.dinmat.U[0] += d.a[0] * d.a[0];
-				atom.dinmat.U[1] += d.a[1] * d.a[1];
-				atom.dinmat.U[2] += d.a[2] * d.a[2];
-				atom.dinmat.U[3] += d.a[0] * d.a[1];
-				atom.dinmat.U[4] += d.a[0] * d.a[2];
-				atom.dinmat.U[5] += d.a[1] * d.a[2];
+				dinmat.U[0] += d.a[0] * d.a[0];
+				dinmat.U[1] += d.a[1] * d.a[1];
+				dinmat.U[2] += d.a[2] * d.a[2];
+				dinmat.U[3] += d.a[0] * d.a[1];
+				dinmat.U[4] += d.a[0] * d.a[2];
+				dinmat.U[5] += d.a[1] * d.a[2];
 			}
 			for (int i = 0; i < 6; i++) {
-				atom.dinmat.U[i] /= size;
+				dinmat.U[i] /= size;
 			}
-			return true;
-		}
-	private:
-		bool CalculateCenter() noexcept {
-			size_t size = vecPoints.size();
-			if (size == 0 || pCell == 0) return false;
-			atom.point = Point(0, 0, 0);
-			for (size_t i = 0; i < size; i++)
-				atom.point += vecPoints[i];
-			atom.point *= static_cast<flo> (1.0 / size);
-			if (is_fractal == false) {
-				atom.point = pCell->CartToFrac() * atom.point;
-			}
-			return true;
 		}
 	};
 	struct ShelxData {
@@ -501,7 +477,15 @@ namespace nsShelxFile {
 			atom.shrink_to_fit();
 		}
 		ShelxData(const ShelxData & in) = delete;
-		ShelxData(ShelxData && in) noexcept(_MoveNothrow) : cell(std::move(in.cell)), symm(std::move(in.symm)), atom(std::move(in.atom)), sfac(std::move(in.sfac)) {}
+		ShelxData(ShelxData && in) noexcept(_MoveNothrow) : cell(std::move(in.cell)), symm(std::move(in.symm)),	
+															atom(std::move(in.atom)), sfac(std::move(in.sfac)) {}
+		void operator=(const ShelxData & in) = delete;
+		void operator=(ShelxData && in) noexcept(_MoveNothrow) {
+			cell = (std::move(in.cell));
+			symm = (std::move(in.symm));
+			atom = (std::move(in.atom));
+			sfac = (std::move(in.sfac));
+		}
 	};
 }
 #endif
