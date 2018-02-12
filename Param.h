@@ -149,22 +149,18 @@ template <std::size_t N>
 class Param {
 protected:
 	const ConstParam<N> * CP = nullptr;
-	bool found[N];
-	std::vector<std::string> strout[N];
 	int noname = -1;
 public:
 	Param(const ConstParam<N> * par) noexcept : CP(par) {
-		for (int i = 0; i < N; i++) {
-			found[i] = false;
+		for (int i = 0; i < N; i++) {		
 			if (std::strcmp(par->par[i].param, "") == 0) {
 				_ASSERTE(noname == -1);
 				noname = i;
 			}
 		}
 	}
-	void TakeAgrs(int argn, char * argv[], void(*func)(const int, std::vector<std::string> &))
+	void TakeAgrs(const int argn, const char * argv[], void(*func)(const int, std::vector<std::string> &)) const
 	{
-		//int k = -1, l = -1;
 		if (argn < 2) return;
 		std::vector<std::string> res;
 		int i = 1;
@@ -219,7 +215,7 @@ private:
 	void help(std::vector<std::string> & out) const noexcept
 	{
 		std::vector<std::string> res;
-		stringstream sstemp;
+		std::stringstream sstemp;
 		if (noname!=-1) {
 			res.push_back("Basic input:");
 			sstemp << "    " << CP->par[noname].desc;
