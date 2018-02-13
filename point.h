@@ -130,7 +130,7 @@ struct tPoint
 		a[2] *= right;
 		return *this;
 	}
-	constexpr tPoint<_T> & operator/=(const _T right) noexcept
+	tPoint<_T> & operator/=(const _T right) noexcept
 	{
 		a[0] /= right;
 		a[1] /= right;
