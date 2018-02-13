@@ -9,12 +9,10 @@ constexpr bool debug = false;
 #endif
 
 #include "Param.h"
-#include "Error.h"
 #include "Point.h"
 #include "Cell.h"
 #include "Matrix.h"
 #include "Dinmat.h"
-#include "Elipsoid.h"
 #include "Hkl.h"
 #include "Ins.h"
 #endif
