@@ -159,7 +159,7 @@ public:
 			}
 		}
 	}
-	void TakeAgrs(const int argn, const char * argv[], void(*func)(const int, std::vector<std::string> &)) const
+	void TakeAgrs(const int argn, char * argv[], void(*func)(const int, std::vector<std::string> &)) const
 	{
 		if (argn < 2) return;
 		std::vector<std::string> res;

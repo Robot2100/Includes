@@ -174,6 +174,7 @@ namespace nsShelxFile {
 		}
 		Atom() noexcept : type(0u), occup(flo(0)) {}
 		Atom(const char *lab, const unsigned int typ, const flo occupancy, Cell & cell, const std::vector<Point> & vecPoints, bool is_fractal = true) : type(typ), occup(occupancy) {
+			strcpy_s(label, lab);
 			size_t size = vecPoints.size();
 			if (size == 0)
 				throw std::invalid_argument("Size of vecPoints == 0");
@@ -194,7 +195,7 @@ namespace nsShelxFile {
 					vecPoints[i].a[1] - Center.a[1],
 					vecPoints[i].a[2] - Center.a[2]);
 				if (is_fractal == true) {
-					d = cell.CartToFrac() * d;
+					d = cell.FracToCart() * d;
 				}
 				dinmat.U[0] += d.a[0] * d.a[0];
 				dinmat.U[1] += d.a[1] * d.a[1];
@@ -308,11 +309,11 @@ namespace nsShelxFile {
 			}
 			out << "SFAC";
 			const size_t size_sfac = sfac.size();
-			for (size_t i = 1; i < size_sfac; i++) {
+			for (size_t i = 0; i < size_sfac; i++) {
 				out << " " << sfac[i];
 			}
 			out << std::endl << "UNIT";
-			for (size_t i = 1; i < size_sfac; i++) {
+			for (size_t i = 0; i < size_sfac; i++) {
 				out << " " << unit[i];
 			}
 			out << std::endl
@@ -485,6 +486,8 @@ namespace nsShelxFile {
 			symm = (std::move(in.symm));
 			atom = (std::move(in.atom));
 			sfac = (std::move(in.sfac));
+			unit = (std::move(in.unit));
+			LATT = in.LATT;
 		}
 	};
 }
