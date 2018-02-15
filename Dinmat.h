@@ -2,7 +2,6 @@
 #ifndef DINMAT_H
 #define DINMAT_H
 
-#include "Error.h"
 
 __if_not_exists (flo) {
 	typedef float flo;

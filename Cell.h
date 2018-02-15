@@ -3,7 +3,6 @@
 #define CELL_H
 #include "Matrix.h"
 #include "Cell.h"
-#include "Error.h"
 __if_not_exists (flo) {
 	typedef float flo;
 }
