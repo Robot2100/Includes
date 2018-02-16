@@ -548,10 +548,6 @@ namespace nsShelxFile {
 			unit = (std::move(in.unit));
 			LATT = in.LATT;
 		}
-	private: 
-		bool comp(const Atom & val1, const Atom & val2) noexcept {
-			return val1.type < val2.type;
-		}
 	};
 }
 #endif
