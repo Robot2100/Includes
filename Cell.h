@@ -2,7 +2,6 @@
 #ifndef CELL_H
 #define CELL_H
 #include "Matrix.h"
-#include "Cell.h"
 __if_not_exists (flo) {
 	typedef double flo;
 }
