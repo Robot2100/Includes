@@ -26,8 +26,8 @@ protected:
 	const BaseParam * p;
 	const bool noname;
 public:
-	constexpr Param(const BaseParam in[]) noexcept : p(in),  noname(in[0].shortparam[0] == 0 && in[0].longparam[0] == 0) {}
-	void TakeAgrs(const int argn,  char * argv[], void(*func)(const int, std::vector<std::string> &)) const
+	constexpr Param(const BaseParam in[]) noexcept : p(in), noname(in[0].shortparam[0] == 0 && in[0].longparam[0] == 0) {}
+	void TakeAgrs(const int argn, char * argv[], void(*func)(const int, std::vector<std::string> &)) const
 	{
 		int lastone = -1;
 		//bool lastone_changed = false;
@@ -40,13 +40,13 @@ public:
 				if (argv[i][1] == '-') {
 					// Long parameter
 					if ((newone = TakeLong(argn, &(argv[i][2]))) == 0) {
-						throw ParamException(argv[i], 1);
+						throw ParamException(argv[i]);
 					}
 				}
 				else {
 					// Short parameter
 					if ((newone = TakeShort(argn, &(argv[i][1]))) == 0) {
-						throw ParamException(argv[i], 1);
+						throw ParamException(argv[i]);
 					}
 				}
 				if (newone == -1) {
@@ -67,16 +67,20 @@ public:
 						lastone = 0;
 					}
 					else {
-						throw ParamException(argv[i], 2);
+						throw ParamException(argv[i]);
 					}
 				}
 				result.push_back(std::string(argv[i]));
 			}
 		}
-		
+		if (lastone != -1)
+		{
+			func(lastone, result);
+		}
+
 	}
 private:
-	int TakeLong(const int argn, const char argv[]) const noexcept{
+	int TakeLong(const int argn, const char argv[]) const noexcept {
 
 		for (size_t j = 0; j < N; j++)
 		{
@@ -92,7 +96,7 @@ private:
 	int TakeShort(const int argn, const char argv[]) const noexcept {
 		for (size_t j = 0; j < N; j++)
 		{
-			if (strcmp(p[j].longparam, argv) == 0) {
+			if (strcmp(p[j].shortparam, argv) == 0) {
 				return j;
 			}
 		}
@@ -101,7 +105,7 @@ private:
 		}
 		return 0;
 	}
-	void help() const{
+	void help() const {
 		std::cout << "usage: Program ";
 		char CNP[N];
 		char Nsym = 15, dsym = 0;
@@ -153,7 +157,7 @@ private:
 		}
 		cout << "[-h/--help]";
 		cout << "\n\nList of options:\n\n";
-		
+
 		if (noname) {
 			cout << "  " << p[0].paramlist << "\n      " << p[0].desc << "\n\n";
 		}
@@ -161,7 +165,7 @@ private:
 		{
 			switch (CNP[i]) {
 			case 1:
-				cout << "  [-"  << p[i].shortparam;
+				cout << "  [-" << p[i].shortparam;
 				break;
 			case 2:
 				cout << "  [--" << p[i].longparam;

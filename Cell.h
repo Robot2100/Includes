@@ -2,7 +2,6 @@
 #ifndef CELL_H
 #define CELL_H
 #include "Matrix.h"
-#include "Cell.h"
 __if_not_exists (flo) {
 	typedef double flo;
 }
@@ -67,7 +66,6 @@ public:
 	explicit tCell(const _T a = 10, const _T b = 10, const _T c = 10, const _T alpha = 90, const _T beta = 90, const _T gamma = 90, const bool is_grad = true) {
 		Create(a, b, c, alpha, beta, gamma);
 	}
-	//tCell(const tCell<_T> &) = delete;
 	tCell(tCell<_T> && right) noexcept(_MoveNothrow) : fracToCart(std::move(right.fracToCart)), cartToFrac(std::move(right.cartToFrac)) {
 		for (int i = 0; i < 3; i++) {
 			lat_dir[i] = right.lat_dir[i];
