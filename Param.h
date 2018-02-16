@@ -5,32 +5,29 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <sstream>
 
 #define PARAMFUNC(Name) void Name (const int n, std::vector<std::string> & vec)
 typedef std::exception ParamException;
 class BaseParam {
 protected:
-	const char shortparam;
+	const char * shortparam;
 	const char * longparam;
 	const char * paramlist;
 	const char * desc;
 public:
-	constexpr BaseParam(const char shortp, const char * longp, const char * paraml, const char * des)
+	constexpr BaseParam(const char * shortp, const char * longp, const char * paraml, const char * des)
 		: shortparam(shortp), longparam(longp), paramlist(paraml), desc(des) {}
-	//template <std::size_t K>
+	template <std::size_t K>
 	friend class Param;
 };
+template <std::size_t N>
 class Param {
 protected:
 	const BaseParam * p;
-	const size_t N;
 	const bool noname;
 public:
-	constexpr Param(const BaseParam in[], const size_t N_of_in) noexcept : p(in), N(N_of_in), noname(in[0].shortparam == 0 && in[0].longparam[0] == 0) {}
-
-
-	void TakeAgrs(const int argn, const char * argv[], void(*func)(const int, std::vector<std::string> &)) const
+	constexpr Param(const BaseParam in[]) noexcept : p(in),  noname(in[0].shortparam[0] == 0 && in[0].longparam[0] == 0) {}
+	void TakeAgrs(const int argn,  char * argv[], void(*func)(const int, std::vector<std::string> &)) const
 	{
 		int lastone = -1;
 		//bool lastone_changed = false;
@@ -43,13 +40,13 @@ public:
 				if (argv[i][1] == '-') {
 					// Long parameter
 					if ((newone = TakeLong(argn, &(argv[i][2]))) == 0) {
-						throw ParamException(argv[i],1);
+						throw ParamException(argv[i], 1);
 					}
 				}
 				else {
 					// Short parameter
-					if ((newone = TakeShort(argn, argv[i])) == 0) {
-						throw ParamException(argv[i],1);
+					if ((newone = TakeShort(argn, &(argv[i][1]))) == 0) {
+						throw ParamException(argv[i], 1);
 					}
 				}
 				if (newone == -1) {
@@ -70,7 +67,7 @@ public:
 						lastone = 0;
 					}
 					else {
-						throw ParamException(argv[i],2);
+						throw ParamException(argv[i], 2);
 					}
 				}
 				result.push_back(std::string(argv[i]));
@@ -95,110 +92,93 @@ private:
 	int TakeShort(const int argn, const char argv[]) const noexcept {
 		for (size_t j = 0; j < N; j++)
 		{
-			if (p[j].shortparam == argv[1] && argv[2] == 0) {
+			if (strcmp(p[j].longparam, argv) == 0) {
 				return j;
 			}
 		}
-		if ('h' == argv[1] && argv[2] == 0) {
+		if (strcmp("h", argv) == 0) {
 			return -1;
 		}
 		return 0;
 	}
 	void help() const{
-		cout << "options: ";
-		for (size_t i = 0; i < N; i++)
-		{
-			//+
+		std::cout << "usage: Program ";
+		char CNP[N];
+		char Nsym = 15, dsym = 0;
+		if (noname) {
+			cout << p[0].paramlist << " ";
+			Nsym += 1 + std::strlen(p[0].paramlist);
 		}
+		for (size_t i = noname ? 1 : 0; i < N; i++)
+		{
+			CNP[i] = 0;
+			if (p[i].shortparam[0] != 0)
+				CNP[i] |= 1;
+			if (p[i].longparam[0] != 0)
+				CNP[i] |= 2;
+			switch (CNP[i]) {
+			case 1:
+				dsym = (p[i].paramlist[0] == 0 ? 4 : std::strlen(p[i].paramlist) + 5) + std::strlen(p[i].shortparam);
+				if (dsym + Nsym > 80) {
+					cout << "\n               ";
+					Nsym = 15;
+				}
+				cout << "[-" << p[i].shortparam;
+				break;
+			case 2:
+				dsym = (p[i].paramlist[0] == 0 ? 5 : std::strlen(p[i].paramlist) + 6) + std::strlen(p[i].longparam);
+				if (dsym + Nsym > 80) {
+					cout << "\n               ";
+					Nsym = 15;
+				}
+				cout << "[--" << p[i].longparam;
+				break;
+			case 3:
+				dsym = (p[i].paramlist[0] == 0 ? 7 : std::strlen(p[i].paramlist) + 8) + std::strlen(p[i].shortparam) + std::strlen(p[i].longparam);
+				if (dsym + Nsym > 80) {
+					cout << "\n               ";
+					Nsym = 15;
+				}
+				cout << "[-" << p[i].shortparam << "/--" << p[i].longparam;
+				break;
+			}
+			Nsym += dsym;
+			if (p[i].paramlist[0] != 0)
+				cout << " " << p[i].paramlist << "] ";
+			else
+				cout << "] ";
+		}
+		if (Nsym > 69) {
+			cout << "\n               ";
+		}
+		cout << "[-h/--help]";
+		cout << "\n\nList of options:\n\n";
+		
+		if (noname) {
+			cout << "  " << p[0].paramlist << "\n      " << p[0].desc << "\n\n";
+		}
+		for (size_t i = noname ? 1 : 0; i < N; i++)
+		{
+			switch (CNP[i]) {
+			case 1:
+				cout << "  [-"  << p[i].shortparam;
+				break;
+			case 2:
+				cout << "  [--" << p[i].longparam;
+				break;
+			case 3:
+				cout << "  [-" << p[i].shortparam << ", --" << p[i].longparam;
+				break;
+			}
+			if (p[i].paramlist[0] != 0) {
+				cout << "]  " << p[i].paramlist;
+			}
+			else
+				cout << ']';
+			cout << "\n      " << p[i].desc << "\n\n";
+		}
+
+		cout << "  [-h, --help]\n      Show this help\n";
 	}
 };
-
-//template <std::size_t N>
-//class Param {
-//protected:
-//	const ConstParam<N> * CP = nullptr;
-//	int noname = -1;
-//public:
-//	Param(const ConstParam<N> * par) noexcept : CP(par) {
-//		for (auto i = 0; i < N; i++) {		
-//			if (par->par[i].shortparam == (char)0 && par->par[i].longparam[0] == 0) {
-//				_ASSERTE(noname == -1);
-//				noname = i;
-//			}
-//		}
-//	}
-//	void TakeAgrs(const int argn, char * argv[], void(*func)(const int, std::vector<std::string> &)) const
-//	{
-//		if (argn < 2) return;
-//		std::vector<std::string> res;
-//		int i = 1;
-//		do {
-//			if (argv[i][0] != '-') {
-//				if (noname != -1) {
-//					res.push_back(argv[i]);
-//				}
-//				else {
-//					throw std::invalid_argument("Didn't find \"-\" before parameter");
-//				}
-//			}
-//			else
-//				break;
-//			i++;
-//		} while (i < argn);
-//		if (i != 1) {
-//			func(noname, res);
-//			res.clear();
-//		}
-//		int last = -1;
-//		for (; i < argn; i++) {
-//			if (argv[i][0] == '-') {
-//				//search for parameter
-//				if (last != -1) {
-//					func(last, res);
-//					res.clear();
-//					last = -1;
-//				}
-//				for (int k = 0; k < N; k++) {
-//					if (std::strcmp((CP->par[k]).param, argv[i]) == 0) {
-//						last = k;
-//					}
-//				}
-//				if (last == -1) {
-//					throw std::invalid_argument("Unknown parameter: " + std::string(argv[i]));
-//				}
-//			}
-//			else {
-//				//add new res
-//				res.push_back(argv[i]);
-//			}
-//		}
-//		if (last != -1) {
-//			func(last, res);
-//			res.clear();
-//		}
-//		help(res);
-//		func(-1, res);
-//	}
-//private:
-//	void help(std::vector<std::string> & out) const noexcept
-//	{
-//		std::vector<std::string> res;
-//		std::stringstream sstemp;
-//		if (noname!=-1) {
-//			res.push_back("Basic input:");
-//			sstemp << "    " << CP->par[noname].desc;
-//			res.push_back(sstemp.str());
-//			sstemp.str(std::string());
-//		}
-//		res.push_back("Parameters:");
-//		for (int i = 0; i < N; i++) {
-//			if (noname == i) continue;
-//			sstemp << "    " << CP->par[i].param << "\t: " << CP->par[i].desc;
-//			res.push_back(sstemp.str());
-//			sstemp.str(std::string());
-//		}
-//		res.swap(out);
-//	}
-//};
-
 #endif
