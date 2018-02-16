@@ -5,9 +5,11 @@
 #include <istream>
 #include <vector>
 #include <cmath>
+#include <algorithm>
 #include "Point.h"
 #include "Matrix.h"
 namespace nsShelxFile {
+	typedef std::exception ShelxDataError;
 	struct SYMM
 	{
 		Matrix mat;
@@ -208,6 +210,12 @@ namespace nsShelxFile {
 				dinmat.U[i] /= size;
 			}
 		}
+		bool operator<(const Atom & right) const noexcept
+		{
+			return type == right.type ?
+				std::strcmp(this->label, right.label) < 0 :
+				type < right.type;
+		}
 	};
 	struct ShelxData {
 	private:
@@ -330,9 +338,60 @@ namespace nsShelxFile {
 			}
 			out << "END";
 		}
-		void OutPOSCAR() {
-			std::ofstream out("POSCAR");
-			
+		void OutPOSCAR() const {
+			auto vec = GenerateSymmAtom();
+			auto sizesfac = sfac.size();
+			auto sizevec = vec.size();
+			std::vector<size_t> resort(sizesfac, size_t(0));
+			for (size_t i = 0, k = 1; i < sizevec && k < sizesfac; i++)
+			{
+				if (vec[i].type > sizesfac)
+					throw ShelxDataError("Wrong type of atoms", 1);
+				if (resort[vec[i].type] == 0) {
+					resort[vec[i].type] = k++;
+				}
+			}
+			for (size_t i = 1; i < sizesfac; i++) // Check for errors
+			{
+				if(resort[i] == 0)
+					throw ShelxDataError("Wrong type of atoms", 2);
+			}
+			for (size_t i = 0; i < sizevec; i++)
+			{
+				vec[i].type = resort[vec[i].type];
+			}
+			{
+				std::vector<size_t> tempresort(sizesfac,0);
+				for (size_t i = 1; i < sizesfac; i++)
+				{
+					tempresort[resort[i]] = i;
+				}
+				resort = std::move(tempresort);
+			}
+			std::ofstream out("POSCAR", std::ios::trunc);
+			out.sync_with_stdio(false);
+			out << "TITLE\n  1.00000000\n";
+			out.precision(8);
+			out.setf(out.fixed);
+			for (size_t i = 0; i < 3; i++) {
+				out << "    " << cell.FracToCart().El(i, 0) << "  " << cell.FracToCart().El(i, 1) << "  " << cell.FracToCart().El(i, 2) << '\n';
+			}
+			for (size_t i = 1; i < sizesfac; i++)
+			{
+				out << "  " << sfac[resort[i]];
+			}
+			out << '\n';
+			for (size_t i = 1; i < sizesfac; i++)
+			{
+				out << "  " << unit[resort[i]];
+			}
+			out << "\nDirect" << std::endl;
+			std::sort(vec.begin(), vec.end());
+			for (size_t i = 0; i < sizevec; i++)
+			{
+				out << "  " << vec[i].point.a[0] << "  " << vec[i].point.a[0] << "  " << vec[i].point.a[0] << '\n';
+			}
+			out << std::flush;
 		}
 
 		ShelxData() noexcept : LATT(-1) {}
@@ -488,6 +547,10 @@ namespace nsShelxFile {
 			sfac = (std::move(in.sfac));
 			unit = (std::move(in.unit));
 			LATT = in.LATT;
+		}
+	private: 
+		bool comp(const Atom & val1, const Atom & val2) noexcept {
+			return val1.type < val2.type;
 		}
 	};
 }
