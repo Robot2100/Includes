@@ -4,7 +4,7 @@
 
 
 __if_not_exists (flo) {
-	typedef float flo;
+	typedef double flo;
 }
 
 template<class _T = flo>

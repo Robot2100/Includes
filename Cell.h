@@ -4,7 +4,7 @@
 #include "Matrix.h"
 #include "Cell.h"
 __if_not_exists (flo) {
-	typedef float flo;
+	typedef double flo;
 }
 
 #ifndef _MATH_DEFINES_DEFINED

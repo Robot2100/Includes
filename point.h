@@ -5,7 +5,7 @@
 #include <vector>
 #include "Matrix.h"
 __if_not_exists (flo) {
-	typedef float flo;
+	typedef double flo;
 }
 
 template<class _T = flo>
@@ -38,11 +38,6 @@ struct tPoint
 		_T R(r());
 		return tPoint<_T>(a[0] / R, a[1] / R, a[2] / R);
 	}
-	[[deprecated]]
-	std::vector<_T> && ToVector() const noexcept {
-		return move(std::vector<_T> {a[0], a[1], a[2]});
-	}
-
 	static constexpr _T Scalar(const tPoint<_T> & left, const tPoint<_T> & right) noexcept
 	{
 		return (left.a[0] * right.a[0] + left.a[1] * right.a[1] + left.a[2] * right.a[2]);
@@ -114,13 +109,6 @@ struct tPoint
 		a[0] -= right;
 		a[1] -= right;
 		a[2] -= right;
-		return *this;
-	}
-	[[deprecated]] tPoint<_T> & operator*=(const tPoint<_T> & right) noexcept
-	{
-		a[0] *= right.a[0];
-		a[1] *= right.a[1];
-		a[2] *= right.a[2];
 		return *this;
 	}
 	tPoint<_T> & operator*=(const _T right) noexcept
