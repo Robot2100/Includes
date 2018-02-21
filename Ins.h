@@ -2,7 +2,7 @@
 #ifndef INS_H
 #define INS_H
 #include <sstream>
-#include <istream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include <algorithm>
@@ -304,7 +304,7 @@ namespace nsShelxFile {
 		}
 		void OutIns(std::ofstream & out) const {
 			size_t syms = symm.size();
-			out.precision(5);
+			out.precision(5u);
 			out.setf(std::stringstream::fixed);
 			out << "TITL imported by nsShelxData by FEELIN" << std::endl;
 			out << "CELL 0.71073 " << cell.Lat_dir(0) << ' ' << cell.Lat_dir(1) << ' ' << cell.Lat_dir(2) << ' '
@@ -389,7 +389,7 @@ namespace nsShelxFile {
 			std::sort(vec.begin(), vec.end());
 			for (size_t i = 0; i < sizevec; i++)
 			{
-				out << "  " << vec[i].point.a[0] << "  " << vec[i].point.a[0] << "  " << vec[i].point.a[0] << '\n';
+				out << "  " << vec[i].point.a[0] << "  " << vec[i].point.a[1] << "  " << vec[i].point.a[2] << '\n';
 			}
 			out << std::flush;
 		}
