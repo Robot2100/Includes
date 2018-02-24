@@ -116,7 +116,7 @@ private:
 	void help() const {
 		std::cout << "usage: Program ";
 		char CNP[N];
-		char Nsym = 15, dsym = 0;
+		size_t Nsym = 15, dsym = 0;
 		if (noname) {
 			std::cout << p[0].paramlist << " ";
 			Nsym += 1 + std::strlen(p[0].paramlist);
