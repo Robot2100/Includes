@@ -3,6 +3,7 @@
 #define INS_H
 #include <sstream>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include <algorithm>
