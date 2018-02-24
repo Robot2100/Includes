@@ -9,8 +9,15 @@
 #include <exception>
 #include "Point.h"
 #include "Matrix.h"
+namespace IncExceptions {
+	class ShelxDataException : public std::runtime_error {
+	public:
+		explicit ShelxDataException(const std::string & _Message) : runtime_error(_Message) {}
+		explicit ShelxDataException(const char * _Message) : runtime_error(_Message) {}
+	};
+}
+
 namespace nsShelxFile {
-	typedef typename std::exception ShelxDataException;
 	struct SYMM
 	{
 		Matrix mat;
