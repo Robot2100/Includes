@@ -12,9 +12,12 @@ template<class _Ty = flo>
 class tMatrix
 {
 	static_assert(std::is_floating_point<_Ty>::value,"type \"tMatrix<_Ty>\" is floating-point-based type.");
+public:
+	typedef typename _Ty value_type;
+	typedef typename std::vector<std::vector<_Ty> > vector_type;
 private:
 	size_t size_a, size_b;
-	std::vector<std::vector<_Ty> > A;
+	vector_type A;
 	void resize(const size_t a, const size_t b) noexcept {
 		_ASSERTE(a != 0 && b != 0);
 		size_a = a;
@@ -27,13 +30,7 @@ private:
 		size_b = b;
 		A.resize(a, std::vector<_Ty>(b));
 	}
-
 public:
-
-	typedef typename _Ty value_type;
-	typedef typename decltype(A) vector_type;
-	typedef typename size_t size_type;
-
 	explicit tMatrix(const size_t a = 3, const size_t b = 3, bool empty = false) noexcept {
 		if (empty == true) resizeU(a, b);
 		else resize(a, b);
@@ -56,11 +53,11 @@ public:
 			}
 		}
 	}
-	explicit tMatrix(const std::vector<std::vector<_Ty>> & in) noexcept : A(in) {
+	explicit tMatrix(const vector_type & in) noexcept : A(in) {
 		size_a = A.size();
 		size_b = A[0].size();
 	}
-	explicit tMatrix(std::vector<std::vector<_Ty>> && in) noexcept : A(in) {
+	explicit tMatrix(vector_type && in) noexcept : A(in) {
 		size_a = A.size();
 		size_b = A[0].size();
 	}
@@ -209,7 +206,6 @@ public:
 		}
 		return det;
 	}
-
 };
 
 template<class _Ty>
