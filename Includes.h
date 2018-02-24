@@ -13,6 +13,5 @@ constexpr bool debug = false;
 #include "Cell.h"
 #include "Matrix.h"
 #include "Dinmat.h"
-#include "Hkl.h"
 #include "Ins.h"
 #endif

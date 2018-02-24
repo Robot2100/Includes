@@ -308,6 +308,7 @@ namespace nsShelxFile {
 			out.precision(5);
 			out.setf(std::ios::fixed);
 			out << "TITL Imported by ShelxData by Alexander Volodin" << std::endl;
+
 			out << "CELL 0.71073 " << cell.Lat_dir(0) << ' ' << cell.Lat_dir(1) << ' ' << cell.Lat_dir(2) << ' '
 				<< cell.Angle_grad(0) << ' ' << cell.Angle_grad(1) << ' ' << cell.Angle_grad(2) << std::endl;
 			out << "ZERR 4 0.0000 0.0000 0.0000 0 0 0" << std::endl;
@@ -390,7 +391,7 @@ namespace nsShelxFile {
 			std::sort(vec.begin(), vec.end());
 			for (size_t i = 0; i < sizevec; i++)
 			{
-				out << "  " << vec[i].point.a[0] << "  " << vec[i].point.a[0] << "  " << vec[i].point.a[0] << '\n';
+				out << "  " << vec[i].point.a[0] << "  " << vec[i].point.a[1] << "  " << vec[i].point.a[2] << '\n';
 			}
 			out << std::flush;
 		}
