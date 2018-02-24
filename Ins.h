@@ -2,14 +2,15 @@
 #ifndef INS_H
 #define INS_H
 #include <sstream>
-#include <istream>
+#include <iostream>
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <exception>
 #include "Point.h"
 #include "Matrix.h"
 namespace nsShelxFile {
-	typedef std::exception ShelxDataError;
+	typedef typename std::exception ShelxDataException;
 	struct SYMM
 	{
 		Matrix mat;
@@ -302,11 +303,11 @@ namespace nsShelxFile {
 			atomcopy.shrink_to_fit();
 			return atomcopy;
 		}
-		void OutIns(std::ofstream & out) const {
+		void OutIns(std::ostream & out) const {
 			size_t syms = symm.size();
 			out.precision(5);
-			out.setf(std::stringstream::fixed);
-			out << "TITL imported by nsShelxData by FEELIN" << std::endl;
+			out.setf(std::ios::fixed);
+			out << "TITL Imported by ShelxData by Alexander Volodin" << std::endl;
 			out << "CELL 0.71073 " << cell.Lat_dir(0) << ' ' << cell.Lat_dir(1) << ' ' << cell.Lat_dir(2) << ' '
 				<< cell.Angle_grad(0) << ' ' << cell.Angle_grad(1) << ' ' << cell.Angle_grad(2) << std::endl;
 			out << "ZERR 4 0.0000 0.0000 0.0000 0 0 0" << std::endl;
@@ -346,7 +347,7 @@ namespace nsShelxFile {
 			for (size_t i = 0, k = 1; i < sizevec && k < sizesfac; i++)
 			{
 				if (vec[i].type > sizesfac)
-					throw ShelxDataError("Wrong type of atoms", 1);
+					throw ShelxDataException("Wrong type of atoms", 1);
 				if (resort[vec[i].type] == 0) {
 					resort[vec[i].type] = k++;
 				}
@@ -354,7 +355,7 @@ namespace nsShelxFile {
 			for (size_t i = 1; i < sizesfac; i++) // Check for errors
 			{
 				if(resort[i] == 0)
-					throw ShelxDataError("Wrong type of atoms", 2);
+					throw ShelxDataException("Wrong type of atoms", 2);
 			}
 			for (size_t i = 0; i < sizevec; i++)
 			{
