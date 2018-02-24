@@ -355,7 +355,7 @@ namespace nsShelxFile {
 			for (size_t i = 0, k = 1; i < sizevec && k < sizesfac; i++)
 			{
 				if (vec[i].type > sizesfac)
-					throw ShelxDataException("Wrong type of atoms", 1);
+					throw IncExceptions::ShelxDataException("Wrong type of atoms");
 				if (resort[vec[i].type] == 0) {
 					resort[vec[i].type] = k++;
 				}
@@ -363,7 +363,7 @@ namespace nsShelxFile {
 			for (size_t i = 1; i < sizesfac; i++) // Check for errors
 			{
 				if(resort[i] == 0)
-					throw ShelxDataException("Wrong type of atoms", 2);
+					throw IncExceptions::ShelxDataException("Wrong type of atoms");
 			}
 			for (size_t i = 0; i < sizevec; i++)
 			{
