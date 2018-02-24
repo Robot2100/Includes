@@ -266,7 +266,7 @@ namespace nsShelxFile {
 				}
 			}
 		}
-		Point TakePoint(std::istream & file, const size_t NAtoms) {
+		Point TakePoint(std::istream & file) {
 			char buf[128];
 			file.getline(buf, 128);
 			char * end = buf;
@@ -475,21 +475,21 @@ namespace nsShelxFile {
 			pList.resize(NAtoms);
 			for (size_t i = 0, k = 0; i < size; i++) {
 				for (size_t j = 1; j <= unit[i]; j++, k++) {
-					char str[128];
-					sprintf_s(str, "%s%d", sfac[i].c_str(), static_cast<int>(j));
-					atom.push_back(nsShelxFile::Atom(str, i + 1, Point(), flo(1.0), Dinmat()));
+					char str2[128];
+					sprintf_s(str2, "%s%d", sfac[i].c_str(), static_cast<int>(j));
+					atom.push_back(nsShelxFile::Atom(str2, i + 1, Point(), flo(1.0), Dinmat()));
 				}
 			}
 			file.getline(buf, MAX_LINE);
 			if (fPos == NULL) {
 				for (size_t i = 0; i < NAtoms; i++) {
-					pList[i].push_back(TakePoint(file, NAtoms));
+					pList[i].push_back(TakePoint(file));
 				}
 			}
 			else {
 				fPos->reserve(NAtoms);
 				for (size_t i = 0; i < NAtoms; i++) {
-					Point p(TakePoint(file, NAtoms));
+					Point p(TakePoint(file));
 					pList[i].push_back(p);
 					fPos->push_back(p);
 				}
@@ -505,7 +505,7 @@ namespace nsShelxFile {
 				file.getline(buf, MAX_LINE);
 
 				for (size_t i = 0; i<NAtoms; i++) {
-					pList[i].push_back(TakePoint(file, NAtoms));
+					pList[i].push_back(TakePoint(file));
 				}
 				for (size_t i = 0; i<NAtoms; i++) {
 					Point dp = pList[i][AllSteps] - pList[i][AllSteps - 1];

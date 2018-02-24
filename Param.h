@@ -47,13 +47,13 @@ public:
 				// argv[i] - parameter!
 				if (argv[i][1] == '-') {
 					// Long parameter
-					if ((newone = TakeLong(argn, &(argv[i][2]))) == -2) {
+					if ((newone = TakeLong(&(argv[i][2]))) == -2) {
 						throw IncExceptions::ParamException(argv[i]);
 					}
 				}
 				else {
 					// Short parameter
-					if ((newone = TakeShort(argn, &(argv[i][1]))) == -2) {
+					if ((newone = TakeShort(&(argv[i][1]))) == -2) {
 						throw IncExceptions::ParamException(argv[i]);
 					}
 				}
@@ -88,7 +88,7 @@ public:
 
 	}
 private:
-	int TakeLong(const int argn, const char argv[]) const noexcept {
+	int TakeLong(const char argv[]) const noexcept {
 
 		for (size_t j = 0; j < N; j++)
 		{
@@ -101,7 +101,7 @@ private:
 		}
 		return -2;
 	}
-	int TakeShort(const int argn, const char argv[]) const noexcept {
+	int TakeShort(const char argv[]) const noexcept {
 		for (size_t j = 0; j < N; j++)
 		{
 			if (strcmp(p[j].shortparam, argv) == 0) {
