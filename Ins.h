@@ -424,6 +424,7 @@ namespace nsShelxFile {
 		}
 		std::vector<std::vector<Point> > LoadXDATCAR(const size_t cutoff = 2000, std::vector<Point> * fPos = NULL)
 		{
+			atom.clear();
 			std::vector<std::vector<Point> > pList;
 			sfac.clear();
 			size_t NAtoms = 0;
@@ -475,7 +476,10 @@ namespace nsShelxFile {
 			pList.resize(NAtoms);
 			for (size_t i = 0, k = 0; i < size; i++) {
 				for (size_t j = 1; j <= unit[i]; j++, k++) {
-					atom.push_back(nsShelxFile::Atom((sfac[i] + std::to_string(j)).c_str(), i + 1, Point(), flo(1.0), Dinmat()));
+					char str2[10];
+					sprintf_s(str2, "%s%d", sfac[i].c_str(), static_cast<int>(j));
+					atom.push_back(nsShelxFile::Atom(str2, i + 1, Point(), flo(1.0), Dinmat()));
+
 				}
 			}
 			file.getline(buf, MAX_LINE);
@@ -516,7 +520,6 @@ namespace nsShelxFile {
 			}
 
 			for (size_t i = 0; i < NAtoms; i++) {
-				pList[i].pop_back();
 				pList[i].shrink_to_fit();
 			}
 			return pList;
@@ -527,9 +530,11 @@ namespace nsShelxFile {
 		{
 			char buf[128], buf4[5];
 			unsigned int check(0u);
+			std::stringstream input;
 			while (in.eof() == false) {
-				in.getline(buf, 127);
-				std::stringstream input(buf);
+				//in.getline(buf, 127);
+				std::getline(in, input.str());
+				//input << buf;
 				input >> buf4;
 				_strupr_s(buf4);
 				unsigned int M(0u);
@@ -660,6 +665,8 @@ namespace nsShelxFile {
 						atom.push_back(Atom(buf4, type, point, occup, dinmat));
 					}
 				}
+				input.clear();
+				input.str(std::string());
 			}
 			symm.shrink_to_fit();
 			atom.shrink_to_fit();
