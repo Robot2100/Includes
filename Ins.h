@@ -475,9 +475,7 @@ namespace nsShelxFile {
 			pList.resize(NAtoms);
 			for (size_t i = 0, k = 0; i < size; i++) {
 				for (size_t j = 1; j <= unit[i]; j++, k++) {
-					char str2[128];
-					sprintf_s(str2, "%s%d", sfac[i].c_str(), static_cast<int>(j));
-					atom.push_back(nsShelxFile::Atom(str2, i + 1, Point(), flo(1.0), Dinmat()));
+					atom.push_back(nsShelxFile::Atom((sfac[i] + std::to_string(j)).c_str(), i + 1, Point(), flo(1.0), Dinmat()));
 				}
 			}
 			file.getline(buf, MAX_LINE);
@@ -501,8 +499,7 @@ namespace nsShelxFile {
 					file.getline(buf, MAX_LINE);
 				}
 			}
-			while (!file.eof()) {
-				file.getline(buf, MAX_LINE);
+			while (file.getline(buf, MAX_LINE)) {
 
 				for (size_t i = 0; i<NAtoms; i++) {
 					pList[i].push_back(TakePoint(file));
