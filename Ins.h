@@ -16,6 +16,16 @@ namespace IncExceptions {
 		explicit ShelxDataException(const std::string & _Message) : runtime_error(_Message) {}
 		explicit ShelxDataException(const char * _Message) : runtime_error(_Message) {}
 	};
+	class OpenXDATCAR_Exception : public std::ios_base::failure {
+	public:
+		explicit OpenXDATCAR_Exception(const std::string & _Message) : failure(_Message) {}
+		explicit OpenXDATCAR_Exception(const char * _Message) : failure(_Message) {}
+	};
+	class ReadXDATCAR_Exception : public std::ios_base::failure {
+	public:
+		explicit ReadXDATCAR_Exception(const std::string & _Message) : failure(_Message) {}
+		explicit ReadXDATCAR_Exception(const char * _Message) : failure(_Message) {}
+	};
 }
 
 namespace nsShelxFile {
@@ -256,7 +266,16 @@ namespace nsShelxFile {
 				}
 			}
 		}
-	
+		Point TakePoint(std::istream & file) {
+			char buf[128];
+			file.getline(buf, 128);
+			char * end = buf;
+			Point out;
+			out.a[0] = strtod(end, &end);
+			out.a[1] = strtod(end, &end);
+			out.a[2] = strtod(end, NULL);
+			return out;
+		}
 	public:
 		Cell cell;
 		std::vector<SYMM> symm;
@@ -403,15 +422,116 @@ namespace nsShelxFile {
 			}
 			out << std::flush;
 		}
+		std::vector<std::vector<Point> > LoadXDATCAR(const size_t cutoff = 2000, std::vector<Point> * fPos = NULL)
+		{
+			atom.clear();
+			std::vector<std::vector<Point> > pList;
+			sfac.clear();
+			size_t NAtoms = 0;
+			constexpr char fName[] = "XDATCAR";
+			constexpr size_t MAX_LINE = 128;
+			std::ifstream file(fName);
+			if (!file.is_open()) {
+				throw IncExceptions::OpenXDATCAR_Exception("Can't open XDATCAR");
+			}
+			char buf[MAX_LINE];
+
+			file.getline(buf, MAX_LINE);
+			file.getline(buf, MAX_LINE);
+			flo U[9];
+			for (size_t i = 0; i < 9; i++)
+			{
+				if (bool(file >> U[i]) == false) {
+					IncExceptions::ReadXDATCAR_Exception("Reading cell matrix from XDATCAR causes failure");
+				}
+			}
+			cell = Cell(Matrix(&U[0], 3, 3), true);
+
+			file.getline(buf, MAX_LINE);
+
+
+			file.getline(buf, MAX_LINE);
+			std::stringstream str(buf);
+			while (!str.eof()) {
+				std::string temp;
+				str >> temp;
+				sfac.push_back(move(temp));
+			}
+			sfac.pop_back();
+			sfac.shrink_to_fit();
+			size_t size = sfac.size();
+
+			unit.reserve(size);
+			unit.resize(size);
+
+			for (size_t i = 0; i < size; i++) {
+				file >> buf;
+				unit[i] = atoi(buf);
+			}
+			file.getline(buf, MAX_LINE);
+
+			for (size_t i = 0; i < size; i++) {
+				NAtoms += unit[i];
+			}
+			pList.resize(NAtoms);
+			for (size_t i = 0, k = 0; i < size; i++) {
+				for (size_t j = 1; j <= unit[i]; j++, k++) {
+					char str2[10];
+					sprintf_s(str2, "%s%d", sfac[i].c_str(), static_cast<int>(j));
+					atom.push_back(nsShelxFile::Atom(str2, i + 1, Point(), flo(1.0), Dinmat()));
+
+				}
+			}
+			file.getline(buf, MAX_LINE);
+			if (fPos == NULL) {
+				for (size_t i = 0; i < NAtoms; i++) {
+					pList[i].push_back(TakePoint(file));
+				}
+			}
+			else {
+				fPos->reserve(NAtoms);
+				for (size_t i = 0; i < NAtoms; i++) {
+					Point p(TakePoint(file));
+					pList[i].push_back(p);
+					fPos->push_back(p);
+				}
+			}
+			int AllSteps = 1;
+			for (size_t k = 1; k < cutoff && !file.eof(); k++) {
+				file.getline(buf, MAX_LINE);
+				for (size_t i = 0; i < NAtoms; i++) {
+					file.getline(buf, MAX_LINE);
+				}
+			}
+			while (file.getline(buf, MAX_LINE)) {
+
+				for (size_t i = 0; i<NAtoms; i++) {
+					pList[i].push_back(TakePoint(file));
+				}
+				for (size_t i = 0; i<NAtoms; i++) {
+					Point dp = pList[i][AllSteps] - pList[i][AllSteps - 1];
+					for (size_t j = 0; j < 3; j++) {
+						if (abs(dp.a[j]) > 0.5)
+							pList[i][AllSteps].a[j] -= dp.a[j]<0?-1:1;
+						else dp.a[j] = 0;
+					}
+				}
+				AllSteps++;
+			}
+
+			for (size_t i = 0; i < NAtoms; i++) {
+				pList[i].shrink_to_fit();
+			}
+			return pList;
+		}
 
 		ShelxData() noexcept : LATT(-1) {}
 		explicit ShelxData(std::istream & in)
 		{
 			char buf[128], buf4[5];
 			unsigned int check(0u);
-			while (in.eof() == false) {
-				in.getline(buf, 127);
-				std::stringstream input(buf);
+			std::stringstream input;
+			while (std::getline(in, input.str())) {
 				input >> buf4;
 				_strupr_s(buf4);
 				unsigned int M(0u);
@@ -542,6 +662,8 @@ namespace nsShelxFile {
 						atom.push_back(Atom(buf4, type, point, occup, dinmat));
 					}
 				}
+				input.clear();
+				input.str(std::string());
 			}
 			symm.shrink_to_fit();
 			atom.shrink_to_fit();

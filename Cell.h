@@ -63,7 +63,7 @@ public:
 		Create(Mat, is_FracToCart);
 	}
 	explicit tCell(const _Ty a = 10, const _Ty b = 10, const _Ty c = 10, const _Ty alpha = 90, const _Ty beta = 90, const _Ty gamma = 90, const bool is_grad = true) {
-		Create(a, b, c, alpha, beta, gamma);
+		Create(a, b, c, alpha, beta, gamma, is_grad);
 	}
 	tCell(tCell<_Ty> && right) noexcept(_MoveNothrow) : fracToCart(std::move(right.fracToCart)), cartToFrac(std::move(right.cartToFrac)) {
 		for (int i = 0; i < 3; i++) {
