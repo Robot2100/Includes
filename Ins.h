@@ -531,10 +531,7 @@ namespace nsShelxFile {
 			char buf[128], buf4[5];
 			unsigned int check(0u);
 			std::stringstream input;
-			while (in.eof() == false) {
-				//in.getline(buf, 127);
-				std::getline(in, input.str());
-				//input << buf;
+			while (std::getline(in, input.str())) {
 				input >> buf4;
 				_strupr_s(buf4);
 				unsigned int M(0u);
@@ -684,6 +681,5 @@ namespace nsShelxFile {
 			LATT = in.LATT;
 		}
 	};
-
 }
 #endif
