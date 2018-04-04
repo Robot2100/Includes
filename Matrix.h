@@ -53,8 +53,20 @@ public:
 			}
 		}
 	}
-	explicit tMatrix(const vector_type & in) noexcept : A(in), size_a(A.size()), size_b(A[0].size()) {}
-	explicit tMatrix(vector_type && in) noexcept : A(in), size_a(A.size()), size_b(A[0].size()) {}
+	explicit tMatrix(const vector_type & in) noexcept : A(in) {
+		size_a = A.size();
+		if (size_a == 0)
+			size_b = 0;
+		else
+			size_b = A[0].size();
+	}
+	explicit tMatrix(vector_type && in) noexcept : A(in) {
+		size_a = A.size();
+		if (size_a == 0) 
+			size_b = 0;
+		else
+			size_b = A[0].size();
+	}
 	tMatrix<_Ty> & operator= (const tMatrix<_Ty> & other) noexcept {
 		if (&other != this) {
 			A = other.A;
@@ -201,14 +213,14 @@ public:
 		return det;
 	}
 
-	static tMatrix EqualMatrix(const size_t n = 3) const noexcept {
+	static tMatrix EqualMatrix(const size_t n = 3) noexcept {
 		using namespace std;
 		vector<vector<_Ty> > vec(n, vector<_Ty>(n, static_cast<_Ty>(0.0)));
 		for (size_t i = 0; i < n; i++)
 		{
 			vec[i][i] = static_cast<_Ty>(1.0);
 		}
-		return tMatrix(std::move(vec));
+		return tMatrix<_Ty>(std::move(vec));
 	}
 
 };
