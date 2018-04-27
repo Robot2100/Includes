@@ -37,7 +37,7 @@ public:
 	}
 	tMatrix(const tMatrix<_Ty> & right) noexcept : A(right.A), size_a(right.size_a), size_b(right.size_b) {}
 	tMatrix(tMatrix<_Ty> && right) noexcept : A(std::move(right.A)), size_a(right.size_a), size_b(right.size_b) {}
-	tMatrix(const _Ty** input_massive, const size_t a = 3, const size_t b = 3) noexcept {
+	explicit tMatrix(const _Ty** input_massive, const size_t a = 3, const size_t b = 3) noexcept {
 		resizeU(a,b);
 		for(size_t i = 0; i < a; i++) {
 			for(size_t j = 0; j < b; j++) {
@@ -45,7 +45,7 @@ public:
 			}
 		}
 	}
-	tMatrix(const _Ty * input_massive, const size_t a = 3, const size_t b = 3) noexcept {
+	explicit tMatrix(const _Ty * input_massive, const size_t a = 3, const size_t b = 3) noexcept {
 		resizeU(a, b);
 		for (size_t i = 0; i < a; i++) {
 			for (size_t j = 0; j < b; j++) {
@@ -55,11 +55,17 @@ public:
 	}
 	explicit tMatrix(const vector_type & in) noexcept : A(in) {
 		size_a = A.size();
-		size_b = A[0].size();
+		if (size_a == 0)
+			size_b = 0;
+		else
+			size_b = A[0].size();
 	}
 	explicit tMatrix(vector_type && in) noexcept : A(in) {
 		size_a = A.size();
-		size_b = A[0].size();
+		if (size_a == 0) 
+			size_b = 0;
+		else
+			size_b = A[0].size();
 	}
 	tMatrix<_Ty> & operator= (const tMatrix<_Ty> & other) noexcept {
 		if (&other != this) {
@@ -206,6 +212,17 @@ public:
 		}
 		return det;
 	}
+
+	static tMatrix EqualMatrix(const size_t n = 3) noexcept {
+		using namespace std;
+		vector<vector<_Ty> > vec(n, vector<_Ty>(n, static_cast<_Ty>(0.0)));
+		for (size_t i = 0; i < n; i++)
+		{
+			vec[i][i] = static_cast<_Ty>(1.0);
+		}
+		return tMatrix<_Ty>(std::move(vec));
+	}
+
 };
 
 template<class _Ty>

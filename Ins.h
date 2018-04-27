@@ -266,7 +266,7 @@ namespace nsShelxFile {
 				}
 			}
 		}
-		Point TakePoint(std::istream & file) {
+		static Point TakePoint(std::istream & file) {
 			char buf[128];
 			file.getline(buf, 128);
 			char * end = buf;
@@ -422,108 +422,6 @@ namespace nsShelxFile {
 			}
 			out << std::flush;
 		}
-		std::vector<std::vector<Point> > LoadXDATCAR(const size_t cutoff = 2000, std::vector<Point> * fPos = NULL)
-		{
-			atom.clear();
-			std::vector<std::vector<Point> > pList;
-			sfac.clear();
-			size_t NAtoms = 0;
-			constexpr char fName[] = "XDATCAR";
-			constexpr size_t MAX_LINE = 128;
-			std::ifstream file(fName);
-			if (!file.is_open()) {
-				throw IncExceptions::OpenXDATCAR_Exception("Can't open XDATCAR");
-			}
-			char buf[MAX_LINE];
-
-			file.getline(buf, MAX_LINE);
-			file.getline(buf, MAX_LINE);
-			flo U[9];
-			for (size_t i = 0; i < 9; i++)
-			{
-				if (bool(file >> U[i]) == false) {
-					IncExceptions::ReadXDATCAR_Exception("Reading cell matrix from XDATCAR causes failure");
-				}
-			}
-			cell = Cell(Matrix(&U[0], 3, 3), true);
-
-			file.getline(buf, MAX_LINE);
-
-
-			file.getline(buf, MAX_LINE);
-			std::stringstream str(buf);
-			while (!str.eof()) {
-				std::string temp;
-				str >> temp;
-				sfac.push_back(move(temp));
-			}
-			sfac.pop_back();
-			sfac.shrink_to_fit();
-			size_t size = sfac.size();
-
-			unit.reserve(size);
-			unit.resize(size);
-
-			for (size_t i = 0; i < size; i++) {
-				file >> buf;
-				unit[i] = atoi(buf);
-			}
-			file.getline(buf, MAX_LINE);
-
-			for (size_t i = 0; i < size; i++) {
-				NAtoms += unit[i];
-			}
-			pList.resize(NAtoms);
-			for (size_t i = 0, k = 0; i < size; i++) {
-				for (size_t j = 1; j <= unit[i]; j++, k++) {
-					char str2[10];
-					sprintf_s(str2, "%s%d", sfac[i].c_str(), static_cast<int>(j));
-					atom.push_back(nsShelxFile::Atom(str2, i + 1, Point(), flo(1.0), Dinmat()));
-
-				}
-			}
-			file.getline(buf, MAX_LINE);
-			if (fPos == NULL) {
-				for (size_t i = 0; i < NAtoms; i++) {
-					pList[i].push_back(TakePoint(file));
-				}
-			}
-			else {
-				fPos->reserve(NAtoms);
-				for (size_t i = 0; i < NAtoms; i++) {
-					Point p(TakePoint(file));
-					pList[i].push_back(p);
-					fPos->push_back(p);
-				}
-			}
-			int AllSteps = 1;
-			for (size_t k = 1; k < cutoff && !file.eof(); k++) {
-				file.getline(buf, MAX_LINE);
-				for (size_t i = 0; i < NAtoms; i++) {
-					file.getline(buf, MAX_LINE);
-				}
-			}
-			while (file.getline(buf, MAX_LINE)) {
-
-				for (size_t i = 0; i<NAtoms; i++) {
-					pList[i].push_back(TakePoint(file));
-				}
-				for (size_t i = 0; i<NAtoms; i++) {
-					Point dp = pList[i][AllSteps] - pList[i][AllSteps - 1];
-					for (size_t j = 0; j < 3; j++) {
-						if (abs(dp.a[j]) > 0.5)
-							pList[i][AllSteps].a[j] -= dp.a[j]<0?-1:1;
-						else dp.a[j] = 0;
-					}
-				}
-				AllSteps++;
-			}
-
-			for (size_t i = 0; i < NAtoms; i++) {
-				pList[i].shrink_to_fit();
-			}
-			return pList;
-		}
 
 		ShelxData() noexcept : LATT(-1) {}
 		explicit ShelxData(std::istream & in)
@@ -531,7 +429,9 @@ namespace nsShelxFile {
 			char buf[128], buf4[5];
 			unsigned int check(0u);
 			std::stringstream input;
-			while (std::getline(in, input.str())) {
+			std::string strbuf;
+			while (std::getline(in, strbuf)) {
+				input << strbuf;
 				input >> buf4;
 				_strupr_s(buf4);
 				unsigned int M(0u);
@@ -668,6 +568,106 @@ namespace nsShelxFile {
 			symm.shrink_to_fit();
 			atom.shrink_to_fit();
 		}
+		explicit ShelxData(const size_t cutoff, std::vector<Point> * fPos = NULL)
+		{
+			std::vector<std::vector<Point> > pList;
+			size_t NAtoms = 0;
+			constexpr char fName[] = "XDATCAR";
+			constexpr size_t MAX_LINE = 128;
+			std::ifstream file(fName);
+			if (!file.is_open()) {
+				throw IncExceptions::OpenXDATCAR_Exception("Can't open XDATCAR");
+			}
+			char buf[MAX_LINE];
+
+			file.getline(buf, MAX_LINE);
+			file.getline(buf, MAX_LINE);
+			flo U[9];
+			for (size_t i = 0; i < 9; i++)
+			{
+				if (bool(file >> U[i]) == false) {
+					IncExceptions::ReadXDATCAR_Exception("Reading cell matrix from XDATCAR causes failure");
+				}
+			}
+			cell = Cell(Matrix(&U[0], 3, 3), true);
+
+			file.getline(buf, MAX_LINE);
+
+
+			file.getline(buf, MAX_LINE);
+			std::stringstream str(buf);
+			while (!str.eof()) {
+				std::string temp;
+				str >> temp;
+				sfac.push_back(move(temp));
+			}
+			sfac.pop_back();
+			sfac.shrink_to_fit();
+			size_t size = sfac.size();
+
+			unit.reserve(size);
+			unit.resize(size);
+
+			for (size_t i = 0; i < size; i++) {
+				file >> buf;
+				unit[i] = atoi(buf);
+			}
+			file.getline(buf, MAX_LINE);
+
+			for (size_t i = 0; i < size; i++) {
+				NAtoms += unit[i];
+			}
+			pList.resize(NAtoms);
+			for (size_t i = 0, k = 0; i < size; i++) {
+				for (size_t j = 1; j <= unit[i]; j++, k++) {
+					char str2[10];
+					sprintf_s(str2, "%s%d", sfac[i].c_str(), static_cast<int>(j));
+					atom.push_back(nsShelxFile::Atom(str2, i + 1, Point(), flo(1.0), Dinmat()));
+
+				}
+			}
+			file.getline(buf, MAX_LINE);
+			if (fPos == NULL) {
+				for (size_t i = 0; i < NAtoms; i++) {
+					pList[i].push_back(TakePoint(file));
+				}
+			}
+			else {
+				fPos->reserve(NAtoms);
+				for (size_t i = 0; i < NAtoms; i++) {
+					Point p(TakePoint(file));
+					pList[i].push_back(p);
+					fPos->push_back(p);
+				}
+			}
+			int AllSteps = 1;
+			for (size_t k = 1; k < cutoff && !file.eof(); k++) {
+				file.getline(buf, MAX_LINE);
+				for (size_t i = 0; i < NAtoms; i++) {
+					file.getline(buf, MAX_LINE);
+				}
+			}
+			while (file.getline(buf, MAX_LINE)) {
+
+				for (size_t i = 0; i<NAtoms; i++) {
+					pList[i].push_back(TakePoint(file));
+				}
+				for (size_t i = 0; i<NAtoms; i++) {
+					Point dp = pList[i][AllSteps] - pList[i][AllSteps - 1];
+					for (size_t j = 0; j < 3; j++) {
+						if (abs(dp.a[j]) > 0.5)
+							pList[i][AllSteps].a[j] -= dp.a[j]<0?-1:1;
+						else dp.a[j] = 0;
+					}
+				}
+				AllSteps++;
+			}
+
+			for (size_t i = 0; i < NAtoms; i++) {
+				pList[i].shrink_to_fit();
+			}
+			return pList;
+		}
 		ShelxData(const ShelxData & in) = delete;
 		ShelxData(ShelxData && in) noexcept(_MoveNothrow) : cell(std::move(in.cell)), symm(std::move(in.symm)),	
 															atom(std::move(in.atom)), sfac(std::move(in.sfac)) {}
@@ -679,6 +679,90 @@ namespace nsShelxFile {
 			sfac = (std::move(in.sfac));
 			unit = (std::move(in.unit));
 			LATT = in.LATT;
+		}
+		static std::vector<std::vector<Point> > LoadXDATCAR(const size_t cutoff = 2000, std::vector<Point> * fPos = NULL)
+		{
+			std::vector<std::vector<Point> > pList;
+			size_t NAtoms = 0;
+			constexpr char fName[] = "XDATCAR";
+			constexpr size_t MAX_LINE = 128;
+			std::ifstream file(fName);
+			if (!file.is_open()) {
+				throw IncExceptions::OpenXDATCAR_Exception("Can't open XDATCAR");
+			}
+			char buf[MAX_LINE];
+
+			file.getline(buf, MAX_LINE);
+			file.getline(buf, MAX_LINE);
+			flo U[9];
+			for (size_t i = 0; i < 9; i++)
+			{
+				if (bool(file >> U[i]) == false) {
+					IncExceptions::ReadXDATCAR_Exception("Reading cell matrix from XDATCAR causes failure");
+				}
+			}
+
+			file.getline(buf, MAX_LINE);
+
+
+			file.getline(buf, MAX_LINE);
+			std::stringstream str(buf);
+			size_t size = 0;
+			while (!str.eof()) {
+				std::string temp;
+				str >> temp;
+				size++;
+			}
+			size--;
+			
+			for (size_t i = 0; i < size; i++) {
+				file >> buf;
+				NAtoms += atoi(buf);
+			}
+			file.getline(buf, MAX_LINE);
+
+			pList.resize(NAtoms);
+			file.getline(buf, MAX_LINE);
+			if (fPos == NULL) {
+				for (size_t i = 0; i < NAtoms; i++) {
+					pList[i].push_back(TakePoint(file));
+				}
+			}
+			else {
+				fPos->reserve(NAtoms);
+				for (size_t i = 0; i < NAtoms; i++) {
+					Point p(TakePoint(file));
+					pList[i].push_back(p);
+					fPos->push_back(p);
+				}
+			}
+			int AllSteps = 1;
+			for (size_t k = 1; k < cutoff && !file.eof(); k++) {
+				file.getline(buf, MAX_LINE);
+				for (size_t i = 0; i < NAtoms; i++) {
+					file.getline(buf, MAX_LINE);
+				}
+			}
+			while (file.getline(buf, MAX_LINE)) {
+
+				for (size_t i = 0; i<NAtoms; i++) {
+					pList[i].push_back(TakePoint(file));
+				}
+				for (size_t i = 0; i<NAtoms; i++) {
+					Point dp = pList[i][AllSteps] - pList[i][AllSteps - 1];
+					for (size_t j = 0; j < 3; j++) {
+						if (abs(dp.a[j]) > 0.5)
+							pList[i][AllSteps].a[j] -= dp.a[j]<0 ? -1 : 1;
+						else dp.a[j] = 0;
+					}
+				}
+				AllSteps++;
+			}
+
+			for (size_t i = 0; i < NAtoms; i++) {
+				pList[i].shrink_to_fit();
+			}
+			return pList;
 		}
 	};
 }
