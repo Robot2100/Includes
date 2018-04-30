@@ -29,6 +29,11 @@ namespace IncExceptions {
 }
 
 namespace nsShelxFile {
+
+	enum InputFile {
+		XDATCAR
+	};
+
 	struct SYMM
 	{
 		Matrix mat;
@@ -149,10 +154,10 @@ namespace nsShelxFile {
 		Point GenSymm(const Point & in) const
 		{
 			return (point + (mat * in));
-		}		
+		}
 		Point RetroGenSymm(const Point & in) const
 		{
-			return (mat *(point +  in));
+			return (mat *(point + in));
 		}
 
 		Point GenSymmNorm(const Point & in) const
@@ -238,7 +243,7 @@ namespace nsShelxFile {
 	};
 	struct ShelxData {
 	private:
-		
+
 		static constexpr bool _MoveNothrow = std::is_nothrow_move_constructible<Cell>::value && std::is_nothrow_move_constructible<std::vector<SYMM> >::value && std::is_nothrow_move_constructible<std::vector<Atom> >::value && std::is_nothrow_move_constructible<std::vector<std::string> >::value && std::is_nothrow_move_constructible<std::vector<size_t> >::value;
 		void Cleaning(std::vector<Atom> & atoms) const {
 			const float cutter = 0.3f / (float)(cell.FracToCart().Trace());
@@ -247,8 +252,8 @@ namespace nsShelxFile {
 				for (size_t i = 0; i < s - 1; i++) {
 					if (atoms[i].type == 0) continue;
 					for (size_t j = i; j < s; j++) {
-						if (i == j || atoms[j].type==0) continue;
-						if ( (float)(atoms[i].point - atoms[j].point).r() < cutter) {
+						if (i == j || atoms[j].type == 0) continue;
+						if ((float)(atoms[i].point - atoms[j].point).r() < cutter) {
 							atoms[j].type = 0;
 						}
 					}
@@ -382,7 +387,7 @@ namespace nsShelxFile {
 			}
 			for (size_t i = 1; i < sizesfac; i++) // Check for errors
 			{
-				if(resort[i] == 0)
+				if (resort[i] == 0)
 					throw IncExceptions::ShelxDataException("Wrong type of atoms");
 			}
 			for (size_t i = 0; i < sizevec; i++)
@@ -390,7 +395,7 @@ namespace nsShelxFile {
 				vec[i].type = resort[vec[i].type];
 			}
 			{
-				std::vector<size_t> tempresort(sizesfac,0);
+				std::vector<size_t> tempresort(sizesfac, 0);
 				for (size_t i = 1; i < sizesfac; i++)
 				{
 					tempresort[resort[i]] = i;
@@ -446,8 +451,8 @@ namespace nsShelxFile {
 					input >> a >> a >> b >> c >> an >> bn >> cn;
 					cell.Create(a, b, c, an, bn, cn);
 				}
-					check |= 0x0001;
-					break;
+				check |= 0x0001;
+				break;
 				case 1: // LATT
 				{
 					input >> LATT;
@@ -521,7 +526,7 @@ namespace nsShelxFile {
 						char temp[128];
 						input >> temp;
 						unsigned int type = atoi(temp);
-						if(type == 0) {
+						if (type == 0) {
 							throw std::runtime_error(buf);
 						}
 						Point point;
@@ -568,9 +573,9 @@ namespace nsShelxFile {
 			symm.shrink_to_fit();
 			atom.shrink_to_fit();
 		}
-		explicit ShelxData(const size_t cutoff, std::vector<Point> * fPos = NULL)
+		explicit ShelxData(const InputFile type)
 		{
-			std::vector<std::vector<Point> > pList;
+			_ASSERTE(type == XDATCAR);
 			size_t NAtoms = 0;
 			constexpr char fName[] = "XDATCAR";
 			constexpr size_t MAX_LINE = 128;
@@ -617,60 +622,20 @@ namespace nsShelxFile {
 			for (size_t i = 0; i < size; i++) {
 				NAtoms += unit[i];
 			}
-			pList.resize(NAtoms);
+			file.getline(buf, MAX_LINE);
 			for (size_t i = 0, k = 0; i < size; i++) {
 				for (size_t j = 1; j <= unit[i]; j++, k++) {
 					char str2[10];
 					sprintf_s(str2, "%s%d", sfac[i].c_str(), static_cast<int>(j));
-					atom.push_back(nsShelxFile::Atom(str2, i + 1, Point(), flo(1.0), Dinmat()));
+					atom.push_back(nsShelxFile::Atom(str2, i + 1, TakePoint(file), flo(1.0), Dinmat()));
 
 				}
 			}
-			file.getline(buf, MAX_LINE);
-			if (fPos == NULL) {
-				for (size_t i = 0; i < NAtoms; i++) {
-					pList[i].push_back(TakePoint(file));
-				}
-			}
-			else {
-				fPos->reserve(NAtoms);
-				for (size_t i = 0; i < NAtoms; i++) {
-					Point p(TakePoint(file));
-					pList[i].push_back(p);
-					fPos->push_back(p);
-				}
-			}
-			int AllSteps = 1;
-			for (size_t k = 1; k < cutoff && !file.eof(); k++) {
-				file.getline(buf, MAX_LINE);
-				for (size_t i = 0; i < NAtoms; i++) {
-					file.getline(buf, MAX_LINE);
-				}
-			}
-			while (file.getline(buf, MAX_LINE)) {
-
-				for (size_t i = 0; i<NAtoms; i++) {
-					pList[i].push_back(TakePoint(file));
-				}
-				for (size_t i = 0; i<NAtoms; i++) {
-					Point dp = pList[i][AllSteps] - pList[i][AllSteps - 1];
-					for (size_t j = 0; j < 3; j++) {
-						if (abs(dp.a[j]) > 0.5)
-							pList[i][AllSteps].a[j] -= dp.a[j]<0?-1:1;
-						else dp.a[j] = 0;
-					}
-				}
-				AllSteps++;
-			}
-
-			for (size_t i = 0; i < NAtoms; i++) {
-				pList[i].shrink_to_fit();
-			}
-			return pList;
+			
 		}
 		ShelxData(const ShelxData & in) = delete;
-		ShelxData(ShelxData && in) noexcept(_MoveNothrow) : cell(std::move(in.cell)), symm(std::move(in.symm)),	
-															atom(std::move(in.atom)), sfac(std::move(in.sfac)) {}
+		ShelxData(ShelxData && in) noexcept(_MoveNothrow) : cell(std::move(in.cell)), symm(std::move(in.symm)),
+			atom(std::move(in.atom)), sfac(std::move(in.sfac)) {}
 		void operator=(const ShelxData & in) = delete;
 		void operator=(ShelxData && in) noexcept(_MoveNothrow) {
 			cell = (std::move(in.cell));
@@ -714,7 +679,7 @@ namespace nsShelxFile {
 				size++;
 			}
 			size--;
-			
+
 			for (size_t i = 0; i < size; i++) {
 				file >> buf;
 				NAtoms += atoi(buf);
