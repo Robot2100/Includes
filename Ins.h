@@ -483,8 +483,8 @@ namespace nsShelxFile {
 						break;
 					}
 				}
-					check |= 0x0002;
-					break;
+				check |= 0x0002;
+				break;
 				case 2: // SYMM
 					input.getline(buf, 127);
 					symm.push_back(SYMM(buf));
