@@ -351,11 +351,11 @@ namespace nsShelxFile {
 			}
 			out << "SFAC";
 			const size_t size_sfac = sfac.size();
-			for (size_t i = 0; i < size_sfac; i++) {
+			for (size_t i = 1; i < size_sfac; i++) {
 				out << " " << sfac[i];
 			}
 			out << std::endl << "UNIT";
-			for (size_t i = 0; i < size_sfac; i++) {
+			for (size_t i = 1; i < size_sfac; i++) {
 				out << " " << unit[i];
 			}
 			out << std::endl
