@@ -483,8 +483,8 @@ namespace nsShelxFile {
 						break;
 					}
 				}
-				check |= 0x0002;
-				break;
+					check |= 0x0002;
+					break;
 				case 2: // SYMM
 					input.getline(buf, 127);
 					symm.push_back(SYMM(buf));
@@ -573,7 +573,7 @@ namespace nsShelxFile {
 			symm.shrink_to_fit();
 			atom.shrink_to_fit();
 		}
-		explicit ShelxData(const InputFile type)
+		explicit ShelxData(const InputFile type) : LATT(-1)
 		{
 			_ASSERTE(type == XDATCAR);
 			size_t NAtoms = 0;
@@ -601,6 +601,7 @@ namespace nsShelxFile {
 
 			file.getline(buf, MAX_LINE);
 			std::stringstream str(buf);
+			sfac.push_back("");
 			while (!str.eof()) {
 				std::string temp;
 				str >> temp;
@@ -611,9 +612,9 @@ namespace nsShelxFile {
 			size_t size = sfac.size();
 
 			unit.reserve(size);
-			unit.resize(size);
+			unit.resize(size, 0);
 
-			for (size_t i = 0; i < size; i++) {
+			for (size_t i = 1; i < size; i++) {
 				file >> buf;
 				unit[i] = atoi(buf);
 			}
@@ -631,7 +632,7 @@ namespace nsShelxFile {
 
 				}
 			}
-			
+
 		}
 		ShelxData(const ShelxData & in) = delete;
 		ShelxData(ShelxData && in) noexcept(_MoveNothrow) : cell(std::move(in.cell)), symm(std::move(in.symm)),
