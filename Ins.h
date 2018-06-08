@@ -628,7 +628,7 @@ namespace nsShelxFile {
 				for (size_t j = 1; j <= unit[i]; j++, k++) {
 					char str2[10];
 					sprintf_s(str2, "%s%d", sfac[i].c_str(), static_cast<int>(j));
-					atom.push_back(nsShelxFile::Atom(str2, i + 1, TakePoint(file), flo(1.0), Dinmat()));
+					atom.push_back(nsShelxFile::Atom(str2, i, TakePoint(file), flo(1.0), Dinmat()));
 
 				}
 			}
