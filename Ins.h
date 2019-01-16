@@ -726,6 +726,7 @@ namespace nsShelxFile {
 			}
 
 			for (size_t i = 0; i < NAtoms; i++) {
+				pList[i].erase(pList[i].cbegin());
 				pList[i].shrink_to_fit();
 			}
 			return pList;
