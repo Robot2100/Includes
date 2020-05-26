@@ -159,7 +159,6 @@ constexpr tPoint<_Ty> operator/(const _Ty b, const tPoint<_Ty> & right) noexcept
 
 template<class _Ty = flo>
 tPoint<_Ty> operator*(const tMatrix<_Ty> & left, const tPoint<_Ty> & right) noexcept {
-	_ASSERTE(left.sizeA() == 3 && left.sizeB() == 3);
 	tPoint<_Ty> res;
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {

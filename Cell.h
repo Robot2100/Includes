@@ -3,16 +3,12 @@
 #define CELL_H
 #include "Matrix.h"
 
-
-#ifndef _MATH_DEFINES_DEFINED
-#define M_PI_2        (1.57079632679489661923)
-#endif // _MATH_DEFINES_DEFINED
-#define GradtoRad     (0.0174532925199432957692)
-#define RadtoGrad     (57.295779513082320877)
 template<class _Ty = Matrix::value_type>
 struct tCell
 {
 private:
+	static constexpr _Ty GradtoRad = 0.0174532925199432957692;
+	static constexpr _Ty RadtoGrad = 57.295779513082320877;
 	static constexpr bool _MoveNothrow = std::is_nothrow_move_constructible< tMatrix<_Ty> >::value;
 protected:
 	_Ty lat_dir[3];
@@ -37,7 +33,7 @@ protected:
 		angle_rad[1] = acos(fracToCart.El(0,2) / lat_dir[2]);
 		angle_rad[0] = acos(temp/lat_dir[2]);
 		for(int i = 0; i < 3; i++)
-			angle_grad[i] = angle_rad[i] * (_Ty)RadtoGrad;
+			angle_grad[i] = angle_rad[i] * RadtoGrad;
 	}
 	void CreateFromCartToFrac(const tMatrix<_Ty> & Mat) {
 		cartToFrac = Mat;
@@ -49,12 +45,13 @@ protected:
 		_Ty cos0 = cos(angle_rad[0]);
 		_Ty cos1 = cos(angle_rad[1]);
 		_Ty cos2 = cos(angle_rad[2]);
+		_Ty sin2 = sin(angle_rad[2]);
 		fracToCart.El(0, 0) = lat_dir[0];
-		fracToCart.El(0, 1) = lat_dir[1] * cos2;
-		fracToCart.El(1, 1) = lat_dir[1] * sin(angle_rad[2]);
-		fracToCart.El(0, 2) = lat_dir[2] * cos1;
-		fracToCart.El(1, 2) = (lat_dir[2] - cos1)*cos1;
-		fracToCart.El(2, 2) = lat_dir[2] / sqrt(1 - cos0*cos0 - cos1*cos1 - cos2*cos2 + 2 * cos0* cos1* cos2);
+		fracToCart.El(1, 0) = lat_dir[1] * cos2;
+		fracToCart.El(1, 1) = lat_dir[1] * sin2;
+		fracToCart.El(2, 0) = lat_dir[2] * cos1;
+		fracToCart.El(1, 2) = lat_dir[2] * (cos0 - cos1 * cos2) / sin2;
+		fracToCart.El(2, 2) = lat_dir[2] * sqrt(sin2*sin2 - cos0*cos0 - cos1*cos1 + 2 * cos0* cos1* cos2)/sin2;
 		cartToFrac = fracToCart.Invert();
 	}
 public:
@@ -65,13 +62,10 @@ public:
 	explicit tCell(const _Ty a = 10, const _Ty b = 10, const _Ty c = 10, const _Ty alpha = 90, const _Ty beta = 90, const _Ty gamma = 90, const bool is_grad = true) {
 		Create(a, b, c, alpha, beta, gamma, is_grad);
 	}
-	tCell(tCell<_Ty> && right) noexcept(_MoveNothrow) : fracToCart(std::move(right.fracToCart)), cartToFrac(std::move(right.cartToFrac)) {
-		for (int i = 0; i < 3; i++) {
-			lat_dir[i] = right.lat_dir[i];
-			angle_rad[i] = right.angle_rad[i];
-			angle_grad[i] = right.angle_grad[i];
-		}
-	}
+	tCell(tCell<_Ty> && right) noexcept(_MoveNothrow) : fracToCart(std::move(right.fracToCart)), cartToFrac(std::move(right.cartToFrac)),
+		lat_dir{ right.lat_dir[0],right.lat_dir[1],right.lat_dir[2] },
+		angle_rad{ right.angle_rad[0],right.angle_rad[1],right.angle_rad[2] },
+		angle_grad{ right.angle_grad[0],right.angle_grad[1],right.angle_grad[2] } {}
 	tCell<_Ty> & operator= (tCell<_Ty> && other) noexcept {
 		if (&other != this) {
 			fracToCart = std::move(other.fracToCart);
@@ -114,7 +108,7 @@ public:
 			angle_grad[1] = beta;
 			angle_grad[2] = gamma;
 			for (int i = 0; i < 3; i++) {
-				angle_rad[i] = angle_grad[i] * (_Ty)GradtoRad;
+				angle_rad[i] = angle_grad[i] * GradtoRad;
 			}
 		}
 		else {
@@ -122,7 +116,7 @@ public:
 			angle_rad[1] = beta;
 			angle_rad[2] = gamma;
 			for (int i = 0; i < 3; i++) {
-				angle_grad[i] = angle_rad[i] * (_Ty)RadtoGrad;
+				angle_grad[i] = angle_rad[i] * RadtoGrad;
 			}
 		}
 		CreateMatrix();
@@ -142,11 +136,5 @@ public:
 	}
 };
 typedef tCell<> Cell;
-
-#ifndef _MATH_DEFINES_DEFINED
-#undef M_PI_2        
-#endif // _MATH_DEFINES_DEFINED
-#undef GradtoRad 
-#undef RadtoGrad 
 
 #endif

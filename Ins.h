@@ -30,7 +30,7 @@ namespace IncExceptions {
 
 namespace nsShelxFile {
 
-	enum InputFile {
+	enum class InputFile {
 		XDATCAR
 	};
 
@@ -41,7 +41,7 @@ namespace nsShelxFile {
 		unsigned int mult;
 		bool LATT;
 		std::string sstr;
-		SYMM() {}
+		SYMM() : LATT(false), mult(1) {}
 		SYMM MirrorSymm() const {
 			SYMM out;
 			out.mat = this->mat.Invert();
@@ -56,7 +56,7 @@ namespace nsShelxFile {
 				t = GenSymmNorm(t);
 			}
 		}
-		explicit SYMM(const char * str, bool isLATT = false) : mat(3u, 3u), point(static_cast<flo>(0.0f), static_cast<flo>(0.0f), static_cast<flo>(0.0f)), LATT(isLATT), sstr(str)
+		explicit SYMM(const char * str, bool isLATT = false) : mat(), point(static_cast<flo>(0.0f), static_cast<flo>(0.0f), static_cast<flo>(0.0f)), LATT(isLATT), sstr(str)
 		{
 			bool minus = false;
 			unsigned int j(0);
@@ -164,8 +164,8 @@ namespace nsShelxFile {
 		{
 			Point temp = GenSymm(in);
 			for (int i = 0; i < 3; i++) {
-				if (temp.a[i] >= 1) temp.a[i] -= (int)temp.a[i];
-				if (temp.a[i] < 0) temp.a[i] += 1 - (int)temp.a[i];
+				temp.a[i] = std::fmod(temp.a[i], 1.0);
+				if (temp.a[i] < 0) temp.a[i] += 1;
 			}
 			return temp;
 		}
@@ -177,14 +177,14 @@ namespace nsShelxFile {
 			Point temp = GenSymm(in, vsym);
 			for (int i = 0; i < 3; i++) {
 				if (temp.a[i] >= 1) temp.a[i] -= (int)temp.a[i];
-				if (temp.a[i] < 0) temp.a[i] += 1 - (int)temp.a[i];
+				if (temp.a[i] < 0) temp.a[i] += (flo)(1.0 - (int)(temp.a[i]));
 			}
 			return temp;
 		}
 		static void MoveToCell(Point & p) noexcept {
 			for (int i = 0; i < 3; i++) {
 				if (p.a[i] >= 1) p.a[i] -= (int)p.a[i];
-				if (p.a[i] < 0) p.a[i] += 1 - (int)p.a[i];
+				if (p.a[i] < 0) p.a[i] += (flo)(1.0 - (int)(p.a[i]));
 			}
 		}
 	};
@@ -198,7 +198,7 @@ namespace nsShelxFile {
 		Atom(const char *lab, const unsigned int typ, const Point & p, const flo occupancy, const Dinmat & din) noexcept : type(typ), point(p), occup(occupancy), dinmat(din) {
 			strcpy_s(label, lab);
 		}
-		Atom() noexcept : type(0u), occup(flo(0)) {}
+		Atom() noexcept : type(0u), occup(flo(0)), label{0,0,0,0,0} {}
 		Atom(const char *lab, const unsigned int typ, const flo occupancy, Cell & cell, const std::vector<Point> & vecPoints, bool is_fractal = true) : type(typ), occup(occupancy) {
 			strcpy_s(label, lab);
 			size_t size = vecPoints.size();
@@ -246,7 +246,7 @@ namespace nsShelxFile {
 
 		static constexpr bool _MoveNothrow = std::is_nothrow_move_constructible<Cell>::value && std::is_nothrow_move_constructible<std::vector<SYMM> >::value && std::is_nothrow_move_constructible<std::vector<Atom> >::value && std::is_nothrow_move_constructible<std::vector<std::string> >::value && std::is_nothrow_move_constructible<std::vector<size_t> >::value;
 		void Cleaning(std::vector<Atom> & atoms) const {
-			const float cutter = 0.3f / (float)(cell.FracToCart().Trace());
+			const float cutter = 0.005 / (float)(cell.FracToCart().Trace());
 			for (int k = 0; k < 2; k++) {
 				const size_t s = atoms.size();
 				for (size_t i = 0; i < s - 1; i++) {
@@ -429,7 +429,7 @@ namespace nsShelxFile {
 		}
 
 		ShelxData() noexcept : LATT(-1) {}
-		explicit ShelxData(std::istream & in)
+		explicit ShelxData(std::istream & in) : LATT(-1)
 		{
 			char buf[128], buf4[5];
 			unsigned int check(0u);
@@ -575,7 +575,7 @@ namespace nsShelxFile {
 		}
 		explicit ShelxData(const InputFile type) : LATT(-1)
 		{
-			_ASSERTE(type == XDATCAR);
+			_ASSERTE(type == InputFile::XDATCAR);
 			size_t NAtoms = 0;
 			constexpr char fName[] = "XDATCAR";
 			constexpr size_t MAX_LINE = 128;
@@ -591,10 +591,10 @@ namespace nsShelxFile {
 			for (size_t i = 0; i < 9; i++)
 			{
 				if (bool(file >> U[i]) == false) {
-					IncExceptions::ReadXDATCAR_Exception("Reading cell matrix from XDATCAR causes failure");
+					throw IncExceptions::ReadXDATCAR_Exception("Reading cell matrix from XDATCAR causes failure");
 				}
 			}
-			cell = Cell(Matrix(&U[0], 3, 3), true);
+			cell = Cell(Matrix(U), true);
 
 			file.getline(buf, MAX_LINE);
 
@@ -635,7 +635,7 @@ namespace nsShelxFile {
 
 		}
 		ShelxData(const ShelxData & in) = delete;
-		ShelxData(ShelxData && in) noexcept(_MoveNothrow) : cell(std::move(in.cell)), symm(std::move(in.symm)),
+		ShelxData(ShelxData && in) noexcept(_MoveNothrow) : cell(std::move(in.cell)), symm(std::move(in.symm)), LATT(-1),
 			atom(std::move(in.atom)), sfac(std::move(in.sfac)) {}
 		void operator=(const ShelxData & in) = delete;
 		void operator=(ShelxData && in) noexcept(_MoveNothrow) {
@@ -664,7 +664,7 @@ namespace nsShelxFile {
 			for (size_t i = 0; i < 9; i++)
 			{
 				if (bool(file >> U[i]) == false) {
-					IncExceptions::ReadXDATCAR_Exception("Reading cell matrix from XDATCAR causes failure");
+					throw IncExceptions::ReadXDATCAR_Exception("Reading cell matrix from XDATCAR causes failure");
 				}
 			}
 
