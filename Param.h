@@ -4,7 +4,7 @@
 
 #include <string>
 #include <vector>
-#include <ostream>
+#include <iostream>
 #include <exception>
 
 namespace IncExceptions {
@@ -15,15 +15,23 @@ namespace IncExceptions {
 	};
 }
 
-#define PARAMFUNC(Name) void Name (const int n, std::vector<std::string> & vec)
+#define PARAMFUNC namespace param {void pfunc(const int n, std::vector<std::string>& vec);} void param::pfunc (const int n, std::vector<std::string> & vec)
+#define PARAMSTART(N) constexpr Param<N> _param({ {
+#define PARAMEND } }); _param.TakeAgrs(argn, argv, param::pfunc);
+
+#define PARAMFUNC_EX(FuncName) namespace param {void FuncName(const int n, std::vector<std::string>& vec);} void param::FuncName (const int n, std::vector<std::string> & vec)
+#define PARAMSTART_EX(Name,N) constexpr Param<N> Name({ {
+#define PARAMEND_EX(Name,FuncName) } }); Name.TakeAgrs(argn, argv, param::FuncName);
+
+
 class BaseParam {
 protected:
-	const char * shortparam;
-	const char * longparam;
-	const char * paramlist;
-	const char * desc;
+	const char* shortparam;
+	const char* longparam;
+	const char* paramlist;
+	const char* desc;
 public:
-	constexpr BaseParam(const char * shortp, const char * longp, const char * paraml, const char * des)
+	constexpr BaseParam(const char* shortp, const char* longp, const char* paraml, const char* des)
 		: shortparam(shortp), longparam(longp), paramlist(paraml), desc(des) {}
 	template <std::size_t K>
 	friend class Param;
@@ -31,11 +39,11 @@ public:
 template <std::size_t N>
 class Param {
 protected:
-	const BaseParam * p;
+	const BaseParam* p;
 	const bool noname;
 public:
 	constexpr Param(const BaseParam in[]) noexcept : p(in), noname(in[0].shortparam[0] == 0 && in[0].longparam[0] == 0) {}
-	void TakeAgrs(const int argn, char * argv[], void(*func)(const int, std::vector<std::string> &)) const
+	void TakeAgrs(const int argn, char* argv[], void(*func)(const int, std::vector<std::string>&)) const
 	{
 		int lastone = -1;
 		//bool lastone_changed = false;

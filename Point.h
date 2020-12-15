@@ -157,9 +157,9 @@ constexpr tPoint<_Ty> operator/(const _Ty b, const tPoint<_Ty> & right) noexcept
 	return tPoint<_Ty>(b / right.a[0], b / right.a[1], b / right.a[2]);
 }
 
-template<class _Ty = flo>
-tPoint<_Ty> operator*(const tMatrix<_Ty> & left, const tPoint<_Ty> & right) noexcept {
-	tPoint<_Ty> res;
+template<class _T1, class _T2>
+tPoint<decltype(_T1()* _T2())> operator*(const tMatrix<_T1> & left, const tPoint<_T2> & right) noexcept {
+	tPoint<decltype(_T1()* _T2())> res;
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
 			res.a[i] += left.El(i, j) * right.a[j];

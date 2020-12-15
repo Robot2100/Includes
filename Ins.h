@@ -36,12 +36,35 @@ namespace nsShelxFile {
 
 	struct SYMM
 	{
-		Matrix mat;
+	private:
+		static constexpr bool _CopyNothrow = std::is_nothrow_copy_constructible<Point>::value && std::is_nothrow_copy_constructible<Matrix>::value;
+		static constexpr bool _MoveNothrow = std::is_nothrow_move_constructible<Point>::value && std::is_nothrow_move_constructible<Matrix>::value;
+	public:
+		tMatrix<int> mat;
 		Point point;
 		unsigned int mult;
 		bool LATT;
-		std::string sstr;
 		SYMM() : LATT(false), mult(1) {}
+		SYMM(const SYMM& in) noexcept(_CopyNothrow) : LATT(in.LATT), mult(in.mult), point(in.point), mat(in.mat) {}
+		SYMM(SYMM && in) noexcept(_MoveNothrow) : LATT(std::move(in.LATT)), mult(std::move(in.mult)), point(std::move(in.point)), mat(std::move(in.mat)) {}
+		SYMM & operator= (const SYMM & other) noexcept(_CopyNothrow) {
+			if (&other != this) {
+				mat = other.mat;
+				point = other.point;
+				mult = other.mult;
+				LATT = other.LATT;
+			}
+			return *this;
+		}
+		SYMM & operator= ( SYMM && other) noexcept(_MoveNothrow) {
+			if (&other != this) {
+				mat = other.mat;
+				point = other.point;
+				mult = other.mult;
+				LATT = other.LATT;
+			}
+			return *this;
+		}
 		SYMM MirrorSymm() const {
 			SYMM out;
 			out.mat = this->mat.Invert();
@@ -56,33 +79,35 @@ namespace nsShelxFile {
 				t = GenSymmNorm(t);
 			}
 		}
-		explicit SYMM(const char * str, bool isLATT = false) : mat(), point(static_cast<flo>(0.0f), static_cast<flo>(0.0f), static_cast<flo>(0.0f)), LATT(isLATT), sstr(str)
+		explicit SYMM(const char * str, bool isLATT = false) : mat(), point(static_cast<flo>(0.0f), static_cast<flo>(0.0f), static_cast<flo>(0.0f)), LATT(isLATT)
 		{
 			bool minus = false;
 			unsigned int j(0);
 			for (unsigned int i = 0; str[i] != '\0'; i++) {
 				switch (str[i]) {
-				case 'x':
+				case 'x': [[fallthrough]];
 				case 'X':
-					if (minus == true) mat.El(j, 0) = static_cast<flo>(-1.0f);
-					else mat.El(j, 0) = static_cast<flo>(1.0f);
+					if (minus == true) mat.El(j, 0) = -1;
+					else mat.El(j, 0) = 1;
 					minus = false;
 					break;
-				case 'y':
+				case 'y': [[fallthrough]];
 				case 'Y':
-					if (minus == true) mat.El(j, 1) = static_cast<flo>(-1.0f);
-					else mat.El(j, 1) = static_cast<flo>(1.0f);
+					if (minus == true) mat.El(j, 1) = -1;
+					else mat.El(j, 1) = 1;
 					minus = false;
 					break;
-				case 'z':
+				case 'z': [[fallthrough]];
 				case 'Z':
-					if (minus == true) mat.El(j, 2) = static_cast<flo>(-1.0f);
-					else mat.El(j, 2) = static_cast<flo>(1.0f);
+					if (minus == true) mat.El(j, 2) = -1;
+					else mat.El(j, 2) = 1;
 					minus = false;
 					break;
-				case ',':
-					j++;
-				case ' ':
+				case ',': 
+					j++; 
+					[[fallthrough]];
+				case ' ': 
+					[[fallthrough]];
 				case '+':
 					break;
 				case '-':
@@ -151,6 +176,45 @@ namespace nsShelxFile {
 			}
 			Multiplicity();
 		}
+		std::string to_string() const 
+		{
+			constexpr char xyz[3] = {'X','Y','Z'};
+			std::string result;
+			result.reserve(30);
+			for (size_t i = 0; i < 3; i++)
+			{
+				bool first = true;
+				if (point.a[i] != 0) {
+					if (point.a[i] < 0.49)
+						if (point.a[i] < 0.21) result += "1/6";
+						else if (point.a[i] < 0.28) result += "1/4";
+						else result += "1/3";
+					else if (point.a[i] < 0.7)
+						if (point.a[i] < 0.57) result += "1/2";
+						else result += "2/3";
+					else if (point.a[i] < 0.79) result += "3/4";
+					else result += "5/6";
+					first = false;
+				}
+				for (size_t j = 0; j < 3; j++)
+				{
+					switch (mat.El(i, j))
+					{
+					case -1:
+						result += '-';
+						result += xyz[j];
+						break;
+					case 1:
+						if(first==false) result += '+';
+						result += xyz[j];
+						break;
+					}
+				}
+				if (i != 2) result += ',';
+			}
+			return result;
+		}
+
 		Point GenSymm(const Point & in) const
 		{
 			return (point + (mat * in));
@@ -243,10 +307,10 @@ namespace nsShelxFile {
 	};
 	struct ShelxData {
 	private:
-
+		static constexpr bool _CopyNothrow = std::is_nothrow_copy_constructible<Cell>::value && std::is_nothrow_copy_constructible<std::vector<SYMM> >::value && std::is_nothrow_copy_constructible<std::vector<Atom> >::value && std::is_nothrow_copy_constructible<std::vector<std::string> >::value && std::is_nothrow_copy_constructible<std::vector<size_t> >::value;
 		static constexpr bool _MoveNothrow = std::is_nothrow_move_constructible<Cell>::value && std::is_nothrow_move_constructible<std::vector<SYMM> >::value && std::is_nothrow_move_constructible<std::vector<Atom> >::value && std::is_nothrow_move_constructible<std::vector<std::string> >::value && std::is_nothrow_move_constructible<std::vector<size_t> >::value;
 		void Cleaning(std::vector<Atom> & atoms) const {
-			const float cutter = 0.005 / (float)(cell.FracToCart().Trace());
+			const float cutter = 0.005f / static_cast<float>(cell.FracToCart().Trace());
 			for (int k = 0; k < 2; k++) {
 				const size_t s = atoms.size();
 				for (size_t i = 0; i < s - 1; i++) {
@@ -347,7 +411,7 @@ namespace nsShelxFile {
 			out << "LATT " << LATT << std::endl;
 			for (size_t i = 0; i < syms; i++) {
 				if (symm[i].LATT == true) continue;
-				out << "SYMM " << symm[i].sstr << std::endl;
+				out << "SYMM " << symm[i].to_string() << std::endl;
 			}
 			out << "SFAC";
 			const size_t size_sfac = sfac.size();
@@ -376,8 +440,8 @@ namespace nsShelxFile {
 			auto vec = GenerateSymmAtom();
 			auto sizesfac = sfac.size();
 			auto sizevec = vec.size();
-			std::vector<size_t> resort(sizesfac, size_t(0));
-			for (size_t i = 0, k = 1; i < sizevec && k < sizesfac; i++)
+			std::vector<unsigned int> resort(sizesfac, static_cast<unsigned int>(0));
+			for (unsigned int i = 0, k = 1; i < sizevec && k < sizesfac; i++)
 			{
 				if (vec[i].type > sizesfac)
 					throw IncExceptions::ShelxDataException("Wrong type of atoms");
@@ -395,8 +459,8 @@ namespace nsShelxFile {
 				vec[i].type = resort[vec[i].type];
 			}
 			{
-				std::vector<size_t> tempresort(sizesfac, 0);
-				for (size_t i = 1; i < sizesfac; i++)
+				std::vector<unsigned int> tempresort(sizesfac, 0);
+				for (unsigned int i = 1; i < sizesfac; i++)
 				{
 					tempresort[resort[i]] = i;
 				}
@@ -624,7 +688,7 @@ namespace nsShelxFile {
 				NAtoms += unit[i];
 			}
 			file.getline(buf, MAX_LINE);
-			for (size_t i = 0, k = 0; i < size; i++) {
+			for (unsigned int i = 0, k = 0; i < size; i++) {
 				for (size_t j = 1; j <= unit[i]; j++, k++) {
 					char str2[10];
 					sprintf_s(str2, "%s%d", sfac[i].c_str(), static_cast<int>(j));
@@ -645,6 +709,16 @@ namespace nsShelxFile {
 			sfac = (std::move(in.sfac));
 			unit = (std::move(in.unit));
 			LATT = in.LATT;
+		}
+		ShelxData copy() const noexcept(_CopyNothrow) {
+			ShelxData res;
+			res.cell = cell;
+			res.symm = symm;
+			res.atom = atom;
+			res.sfac = sfac;
+			res.unit = unit;
+			res.LATT = LATT;
+			return res;
 		}
 		static std::vector<std::vector<Point> > LoadXDATCAR(const size_t cutoff = 2000, std::vector<Point> * fPos = NULL)
 		{
@@ -702,7 +776,7 @@ namespace nsShelxFile {
 					fPos->push_back(p);
 				}
 			}
-			int AllSteps = 1;
+			size_t AllSteps = 1;
 			for (size_t k = 1; k < cutoff && !file.eof(); k++) {
 				file.getline(buf, MAX_LINE);
 				for (size_t i = 0; i < NAtoms; i++) {
@@ -715,7 +789,7 @@ namespace nsShelxFile {
 					pList[i].push_back(TakePoint(file));
 				}
 				for (size_t i = 0; i<NAtoms; i++) {
-					Point dp = pList[i][AllSteps] - pList[i][AllSteps - 1];
+					Point dp = pList[i][AllSteps] - pList[i][AllSteps-1];
 					for (size_t j = 0; j < 3; j++) {
 						if (abs(dp.a[j]) > 0.5)
 							pList[i][AllSteps].a[j] -= dp.a[j]<0 ? -1 : 1;
